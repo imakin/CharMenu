@@ -60,6 +60,7 @@ void LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y)
 }
 
 
+/**  return is it true that particular button is pressed (Enter, Back, Next, Prev)*/
 uint8_t ButtonEnter()
 {
 	return isclear(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN);
@@ -81,18 +82,22 @@ uint8_t ButtonPrev()
 
 void ButtonWait()
 {
+	/** Let the system pause and wait for any button to be pressed */
 	while (isset(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN) && isset(BUTTON_BACK_PIN,BUTTON_BACK_DOWN) && isset(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN) && isset(BUTTON_PREV_PIN,BUTTON_PREV_DOWN));
 }
 uint8_t ButtonIsPressed()
 {
+	/** Check if there are (any) button pressed */
 	return (isclear(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN) || isclear(BUTTON_BACK_PIN,BUTTON_BACK_DOWN) || isclear(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN) || isclear(BUTTON_PREV_PIN,BUTTON_PREV_DOWN));
 }
 uint8_t ButtonIsNotPressed()
 {
+	/** Check if all button is currently not pressed */
 	return (isset(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN) || isset(BUTTON_BACK_PIN,BUTTON_BACK_DOWN) || isset(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN) || isset(BUTTON_PREV_PIN,BUTTON_PREV_DOWN));
 }
 uint8_t ButtonRead()
 {
+	/** Wait for any button to be pressed and return which button is pressed */
 	uint8_t output;
 	ButtonWait();
 	if (isclear(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN))
@@ -114,6 +119,11 @@ void CharMenuInit()
 	MenuMain[0].numOfChildren = MAIN_MENU_NUMBER_OF_CHILDREN;
 	MenuMain[0].parentIndex = 0;
 	MenuMain[0].actFunction = 0;
+	
+	BUTTON_ENTER_PORT |= (1<<BUTTON_ENTER_DOWN);
+	BUTTON_BACK_PORT |= (1<<BUTTON_BACK_DOWN);
+	BUTTON_NEXT_PORT |= (1<<BUTTON_NEXT_DOWN);
+	BUTTON_PREV_PORT |= (1<<BUTTON_PREV_DOWN);
 }
 
 void CharMenuRelink()
@@ -130,8 +140,9 @@ void CharMenuDraw()
 	if (MenuMain[gState].actFunction!=0)
 	{
 		MenuMain[gState].actFunction();
-		_delay_ms(500);
-		while (!ButtonBack());
+		//------------- Delay and button wait is now disabled, to let user pick wether to do delay and wait for button or not
+		/**_delay_ms(500);
+		while (!ButtonBack());**/
 		gCursor = MenuMain[gState].cursorNum;
 		gState = MenuMain[gState].parentIndex;
 		return;

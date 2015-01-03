@@ -14,7 +14,12 @@
 #define BUTTON_BACK_PIN		PINC
 #define BUTTON_PREV_PIN		PINC
 #define BUTTON_NEXT_PIN		PINC
-#define BUTTON_ENTER_DOWN	1
+#define BUTTON_ENTER_PORT	PORTC
+#define BUTTON_BACK_PORT	PORTC
+#define BUTTON_PREV_PORT	PORTC
+#define BUTTON_NEXT_PORT	PORTC
+///Enter the pin number for each of the button 
+#define BUTTON_ENTER_DOWN	1 ///means Enter button is in PINC- bit 1
 #define BUTTON_BACK_DOWN	2
 #define BUTTON_PREV_DOWN	0
 #define BUTTON_NEXT_DOWN	3
@@ -23,7 +28,7 @@
 ///Total number of children defined here:
 #define MAIN_MENU_NUMBER_OF_CHILDREN	2
 ///For optimum performance, total number of menus should be defined
-#define TOTAL_MENU	19
+#define TOTAL_MENU	11
 
 
 #define _set(_REG,_BIT) _REG |= (1<<_BIT) 			//set bit
