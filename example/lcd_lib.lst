@@ -1,0 +1,1981 @@
+   1               		.file	"lcd_lib.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  11               	LCDMix_4Bit:
+  12               	.LFB7:
+  13               		.file 1 "lcd_lib.c"
+   1:lcd_lib.c     **** //*****************************************************************************
+   2:lcd_lib.c     **** //
+   3:lcd_lib.c     **** // File Name	: 'lcd_lib.h'
+   4:lcd_lib.c     **** // Title		: 8 and 4 bit LCd interface + mixed pins modes
+   5:lcd_lib.c     **** // Author		: Scienceprog.com - Copyright (C) 2007
+   6:lcd_lib.c     **** // Created		: 2007-03-29
+   7:lcd_lib.c     **** // Revised		: 2011-12-13
+   8:lcd_lib.c     **** // Version		: 2.0
+   9:lcd_lib.c     **** // Target MCU	: Atmel AVR series
+  10:lcd_lib.c     **** //
+  11:lcd_lib.c     **** // This code is distributed under the GNU Public License
+  12:lcd_lib.c     **** //		which can be found at http://www.gnu.org/licenses/gpl.txt
+  13:lcd_lib.c     **** //
+  14:lcd_lib.c     **** //*****************************************************************************
+  15:lcd_lib.c     **** #include "lcd_lib.h"
+  16:lcd_lib.c     **** #include <inttypes.h>
+  17:lcd_lib.c     **** #include <avr/io.h>
+  18:lcd_lib.c     **** #include <avr/pgmspace.h>
+  19:lcd_lib.c     **** #include <util/delay.h>
+  20:lcd_lib.c     **** 
+  21:lcd_lib.c     **** #ifdef LCD_4BIT_M
+  22:lcd_lib.c     **** static void LCDMix_4Bit(uint8_t data);
+  23:lcd_lib.c     **** #endif
+  24:lcd_lib.c     **** #ifdef LCD_8BIT_M
+  25:lcd_lib.c     **** static void LCDMix_8Bit(uint8_t data);
+  26:lcd_lib.c     **** #endif
+  27:lcd_lib.c     **** const uint8_t LcdCustomChar[] PROGMEM=//define 8 custom LCD chars
+  28:lcd_lib.c     **** {
+  29:lcd_lib.c     **** 	0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x1F, 0x00, // 0. 0/5 full progress block
+  30:lcd_lib.c     **** 	0x00, 0x1F, 0x10, 0x10, 0x10, 0x10, 0x1F, 0x00, // 1. 1/5 full progress block
+  31:lcd_lib.c     **** 	0x00, 0x1F, 0x18, 0x18, 0x18, 0x18, 0x1F, 0x00, // 2. 2/5 full progress block
+  32:lcd_lib.c     **** 	0x00, 0x1F, 0x1C, 0x1C, 0x1C, 0x1C, 0x1F, 0x00, // 3. 3/5 full progress block
+  33:lcd_lib.c     **** 	0x00, 0x1F, 0x1E, 0x1E, 0x1E, 0x1E, 0x1F, 0x00, // 4. 4/5 full progress block
+  34:lcd_lib.c     **** 	0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x00, // 5. 5/5 full progress block
+  35:lcd_lib.c     **** 	0x03, 0x07, 0x0F, 0x1F, 0x0F, 0x07, 0x03, 0x00, // 6. rewind arrow
+  36:lcd_lib.c     **** 	0x18, 0x1C, 0x1E, 0x1F, 0x1E, 0x1C, 0x18, 0x00  // 7. fast-forward arrow
+  37:lcd_lib.c     **** };
+  38:lcd_lib.c     **** 
+  39:lcd_lib.c     **** #ifdef LCD_4BIT_M
+  40:lcd_lib.c     **** //sets four port pins to corresponding nibble
+  41:lcd_lib.c     **** //for high nibble use mask data & 0b11110000
+  42:lcd_lib.c     **** //for low nibble use (data & 0b00001111)<<4
+  43:lcd_lib.c     **** static void LCDMix_4Bit(uint8_t data)
+  44:lcd_lib.c     **** {
+  14               		.loc 1 44 0
+  15               		.cfi_startproc
+  16               	.LVL0:
+  17               	/* prologue: function */
+  18               	/* frame size = 0 */
+  19               	/* stack size = 0 */
+  20               	.L__stack_usage = 0
+  45:lcd_lib.c     ****   if((data)&(0b10000000)) LDPD7 |=1<<LCD_D7;
+  21               		.loc 1 45 0
+  22 0000 87FF      		sbrs r24,7
+  23 0002 00C0      		rjmp .L2
+  24               		.loc 1 45 0 is_stmt 0 discriminator 1
+  25 0004 C09A      		sbi 0x18,0
+  26 0006 00C0      		rjmp .L3
+  27               	.L2:
+  46:lcd_lib.c     ****     else LDPD7 &=~(1<<LCD_D7);
+  28               		.loc 1 46 0 is_stmt 1
+  29 0008 C098      		cbi 0x18,0
+  30               	.L3:
+  47:lcd_lib.c     ****   if((data)&(0b01000000)) LDPD6 |=1<<LCD_D6;
+  31               		.loc 1 47 0
+  32 000a 86FF      		sbrs r24,6
+  33 000c 00C0      		rjmp .L4
+  34               		.loc 1 47 0 is_stmt 0 discriminator 1
+  35 000e C19A      		sbi 0x18,1
+  36 0010 00C0      		rjmp .L5
+  37               	.L4:
+  48:lcd_lib.c     ****     else LDPD6 &=~(1<<LCD_D6);
+  38               		.loc 1 48 0 is_stmt 1
+  39 0012 C198      		cbi 0x18,1
+  40               	.L5:
+  49:lcd_lib.c     ****   if((data)&(0b00100000)) LDPD5 |=1<<LCD_D5;
+  41               		.loc 1 49 0
+  42 0014 85FF      		sbrs r24,5
+  43 0016 00C0      		rjmp .L6
+  44               		.loc 1 49 0 is_stmt 0 discriminator 1
+  45 0018 C29A      		sbi 0x18,2
+  46 001a 00C0      		rjmp .L7
+  47               	.L6:
+  50:lcd_lib.c     ****     else LDPD5&=~(1<<LCD_D5);
+  48               		.loc 1 50 0 is_stmt 1
+  49 001c C298      		cbi 0x18,2
+  50               	.L7:
+  51:lcd_lib.c     ****   if((data)&(0b00010000)) LDPD4 |=1<<LCD_D4;
+  51               		.loc 1 51 0
+  52 001e 84FF      		sbrs r24,4
+  53 0020 00C0      		rjmp .L8
+  54               	.LVL1:
+  55               	.LBB34:
+  56               	.LBB35:
+  57 0022 C39A      		sbi 0x18,3
+  58 0024 0895      		ret
+  59               	.LVL2:
+  60               	.L8:
+  61               	.LBE35:
+  62               	.LBE34:
+  52:lcd_lib.c     ****     else LDPD4 &=~(1<<LCD_D4);	
+  63               		.loc 1 52 0
+  64 0026 C398      		cbi 0x18,3
+  65 0028 0895      		ret
+  66               		.cfi_endproc
+  67               	.LFE7:
+  69               	.global	LCDsendChar
+  71               	LCDsendChar:
+  72               	.LFB9:
+  53:lcd_lib.c     **** }
+  54:lcd_lib.c     **** #endif
+  55:lcd_lib.c     **** #ifdef LCD_8BIT_M
+  56:lcd_lib.c     **** static void LCDMix_8Bit(uint8_t data)
+  57:lcd_lib.c     **** {
+  58:lcd_lib.c     ****   if((data)&(0b10000000)) LDPD7 |=1<<LCD_D7;
+  59:lcd_lib.c     ****     else LDPD7 &=~(1<<LCD_D7);
+  60:lcd_lib.c     ****   if((data)&(0b01000000)) LDPD6 |=1<<LCD_D6;
+  61:lcd_lib.c     ****     else LDPD6 &=~(1<<LCD_D6);
+  62:lcd_lib.c     ****   if((data)&(0b00100000)) LDPD5 |=1<<LCD_D5;
+  63:lcd_lib.c     ****     else LDPD5&=~(1<<LCD_D5);
+  64:lcd_lib.c     ****   if((data)&(0b00010000)) LDPD4 |=1<<LCD_D4;
+  65:lcd_lib.c     ****     else LDPD4 &=~(1<<LCD_D4);		
+  66:lcd_lib.c     ****   if((data)&(0b00001000)) LDPD3 |=1<<LCD_D3;
+  67:lcd_lib.c     ****     else LDPD3 &=~(1<<LCD_D3);
+  68:lcd_lib.c     ****   if((data)&(0b00000100)) LDPD2 |=1<<LCD_D2;
+  69:lcd_lib.c     ****     else LDPD2 &=~(1<<LCD_D2);
+  70:lcd_lib.c     ****   if((data)&(0b00000010)) LDPD1 |=1<<LCD_D1;
+  71:lcd_lib.c     ****     else LDPD1&=~(1<<LCD_D1);
+  72:lcd_lib.c     ****   if((data)&(0b00000001)) LDPD0 |=1<<LCD_D0;
+  73:lcd_lib.c     ****     else LDPD0 &=~(1<<LCD_D0);			
+  74:lcd_lib.c     **** }
+  75:lcd_lib.c     **** #endif
+  76:lcd_lib.c     **** void LCDinit(void)//Initializes LCD
+  77:lcd_lib.c     **** {
+  78:lcd_lib.c     **** #ifdef LCD_4BIT	
+  79:lcd_lib.c     **** 	//4 bit part
+  80:lcd_lib.c     **** 	_delay_ms(15);
+  81:lcd_lib.c     **** 	//zero to data pins
+  82:lcd_lib.c     **** 	LDP &=~(1<<LCD_D7|1<<LCD_D6|1<<LCD_D5|1<<LCD_D4);
+  83:lcd_lib.c     **** 	//zero to control pins
+  84:lcd_lib.c     **** 	LCP &= ~(1<<LCD_E|1<<LCD_RW|1<<LCD_RS);
+  85:lcd_lib.c     **** 	LDDR|=1<<LCD_D7|1<<LCD_D6|1<<LCD_D5|1<<LCD_D4;
+  86:lcd_lib.c     **** 	LCDR|=1<<LCD_E|1<<LCD_RW|1<<LCD_RS;
+  87:lcd_lib.c     ****    //---------one------
+  88:lcd_lib.c     **** 	LDP=0<<LCD_D7|0<<LCD_D6|1<<LCD_D5|1<<LCD_D4; //4 bit mode
+  89:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+  90:lcd_lib.c     **** 	_delay_ms(1);
+  91:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+  92:lcd_lib.c     **** 	_delay_ms(1);
+  93:lcd_lib.c     **** 	//-----------two-----------
+  94:lcd_lib.c     **** 	LDP=0<<LCD_D7|0<<LCD_D6|1<<LCD_D5|1<<LCD_D4; //4 bit mode
+  95:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+  96:lcd_lib.c     **** 	_delay_ms(1);
+  97:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+  98:lcd_lib.c     **** 	_delay_ms(1);
+  99:lcd_lib.c     **** 	//-------three-------------
+ 100:lcd_lib.c     **** 	LDP=0<<LCD_D7|0<<LCD_D6|1<<LCD_D5|0<<LCD_D4; //4 bit mode
+ 101:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+ 102:lcd_lib.c     **** 	_delay_ms(1);
+ 103:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 104:lcd_lib.c     **** 	_delay_ms(1);
+ 105:lcd_lib.c     **** 	//--------4 bit--dual line---------------
+ 106:lcd_lib.c     **** 	LCDsendCommand(0b00101000);
+ 107:lcd_lib.c     ****    //-----increment address, invisible cursor shift------
+ 108:lcd_lib.c     **** 	LCDsendCommand(0b00001100);
+ 109:lcd_lib.c     **** #endif
+ 110:lcd_lib.c     **** #ifdef LCD_8BIT
+ 111:lcd_lib.c     **** 	//8 bit part
+ 112:lcd_lib.c     **** 	_delay_ms(15);
+ 113:lcd_lib.c     **** 	//zero to datapins
+ 114:lcd_lib.c     **** 	LDP =0x00;
+ 115:lcd_lib.c     **** 	//zero to control pins
+ 116:lcd_lib.c     **** 	LCP &=(1<<LCD_E|1<<LCD_RW|1<<LCD_RS);
+ 117:lcd_lib.c     **** 	//set direction pins for data and control
+ 118:lcd_lib.c     **** 	LDDR|=1<<LCD_D7|1<<LCD_D6|1<<LCD_D5|1<<LCD_D4|1<<LCD_D3
+ 119:lcd_lib.c     **** 			|1<<LCD_D2|1<<LCD_D1|1<<LCD_D0;
+ 120:lcd_lib.c     **** 	LCDR|=1<<LCD_E|1<<LCD_RW|1<<LCD_RS;
+ 121:lcd_lib.c     ****    //---------one------
+ 122:lcd_lib.c     **** 	LDP=0<<LCD_D7|0<<LCD_D6|1<<LCD_D5|1<<LCD_D4|0<<LCD_D3
+ 123:lcd_lib.c     **** 			|0<<LCD_D2|0<<LCD_D1|0<<LCD_D0; //8 it mode
+ 124:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+ 125:lcd_lib.c     **** 	_delay_ms(1);
+ 126:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 127:lcd_lib.c     **** 	_delay_ms(1);
+ 128:lcd_lib.c     **** 	//-----------two-----------
+ 129:lcd_lib.c     **** 	LDP=0<<LCD_D7|0<<LCD_D6|1<<LCD_D5|1<<LCD_D4|0<<LCD_D3
+ 130:lcd_lib.c     **** 			|0<<LCD_D2|0<<LCD_D1|0<<LCD_D0; //8 it mode
+ 131:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+ 132:lcd_lib.c     **** 	_delay_ms(1);
+ 133:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 134:lcd_lib.c     **** 	_delay_ms(1);
+ 135:lcd_lib.c     **** 	//-------three-------------
+ 136:lcd_lib.c     **** 	LDP=0<<LCD_D7|0<<LCD_D6|1<<LCD_D5|1<<LCD_D4|0<<LCD_D3
+ 137:lcd_lib.c     **** 			|0<<LCD_D2|0<<LCD_D1|0<<LCD_D0; //8 it mode
+ 138:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+ 139:lcd_lib.c     **** 	_delay_ms(1);
+ 140:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 141:lcd_lib.c     **** 	_delay_ms(1);
+ 142:lcd_lib.c     **** 	//--------8 bit dual line----------
+ 143:lcd_lib.c     **** 	LCDsendCommand(0b00111000); //8 bit mode
+ 144:lcd_lib.c     **** 	/*LDP=0<<LCD_D7|0<<LCD_D6|1<<LCD_D5|1<<LCD_D4|1<<LCD_D3
+ 145:lcd_lib.c     **** 			|0<<LCD_D2|0<<LCD_D1|0<<LCD_D0;
+ 146:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+ 147:lcd_lib.c     **** 	_delay_ms(1);
+ 148:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 149:lcd_lib.c     **** 	_delay_ms(1); */
+ 150:lcd_lib.c     ****    //-----increment address, invisible cursor shift------
+ 151:lcd_lib.c     **** 	LCDsendCommand(0b00001100);
+ 152:lcd_lib.c     **** 	/*LDP=0<<LCD_D7|0<<LCD_D6|0<<LCD_D5|0<<LCD_D4|1<<LCD_D3
+ 153:lcd_lib.c     **** 			|1<<LCD_D2|0<<LCD_D1|0<<LCD_D0; 
+ 154:lcd_lib.c     **** 	LCP|=1<<LCD_E|0<<LCD_RW|0<<LCD_RS;		
+ 155:lcd_lib.c     **** 	_delay_ms(1);
+ 156:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 157:lcd_lib.c     **** 	_delay_ms(5);*/
+ 158:lcd_lib.c     **** 
+ 159:lcd_lib.c     **** #endif
+ 160:lcd_lib.c     **** 
+ 161:lcd_lib.c     **** #ifdef LCD_4BIT_M
+ 162:lcd_lib.c     **** 	//4 mixed bit part
+ 163:lcd_lib.c     **** 	_delay_ms(15);
+ 164:lcd_lib.c     **** 	//zero to data pins
+ 165:lcd_lib.c     **** 	LCDMix_4Bit(0b00000000);
+ 166:lcd_lib.c     **** 	//zero to control pins
+ 167:lcd_lib.c     **** 	LDPRS &=~(1<<LCD_RS);
+ 168:lcd_lib.c     **** 	LDPRW &=~(1<<LCD_RW);
+ 169:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 170:lcd_lib.c     **** 	//set data direction
+ 171:lcd_lib.c     **** 	LDDD4 |=1<<LCD_D4;
+ 172:lcd_lib.c     **** 	LDDD5 |=1<<LCD_D5;
+ 173:lcd_lib.c     **** 	LDDD6 |=1<<LCD_D6;
+ 174:lcd_lib.c     **** 	LDDD7 |=1<<LCD_D7;
+ 175:lcd_lib.c     **** 	//control direction pins
+ 176:lcd_lib.c     **** 	LDDRS |=1<<LCD_RS;
+ 177:lcd_lib.c     **** 	LDDRW |=1<<LCD_RW;
+ 178:lcd_lib.c     **** 	LDDE |=1<<LCD_E;
+ 179:lcd_lib.c     ****    //---------one------
+ 180:lcd_lib.c     **** 	LCDMix_4Bit(0b00110000);
+ 181:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 182:lcd_lib.c     **** 	_delay_ms(1);
+ 183:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 184:lcd_lib.c     **** 	_delay_ms(1);
+ 185:lcd_lib.c     **** 	//-----------two-----------
+ 186:lcd_lib.c     **** 	LCDMix_4Bit(0b00110000);
+ 187:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 188:lcd_lib.c     **** 	_delay_ms(1);
+ 189:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 190:lcd_lib.c     **** 	_delay_ms(1);
+ 191:lcd_lib.c     **** 	//-------three-------------
+ 192:lcd_lib.c     **** 	LCDMix_4Bit(0b00100000);
+ 193:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 194:lcd_lib.c     **** 	_delay_ms(1);
+ 195:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 196:lcd_lib.c     **** 	_delay_ms(1);
+ 197:lcd_lib.c     **** 	//--------4 bit--dual line---------------
+ 198:lcd_lib.c     **** 	LCDsendCommand(0b00101000);
+ 199:lcd_lib.c     ****    //-----increment address, invisible cursor shift------
+ 200:lcd_lib.c     **** 	LCDsendCommand(0b00001100);
+ 201:lcd_lib.c     **** #endif
+ 202:lcd_lib.c     **** 
+ 203:lcd_lib.c     **** #ifdef LCD_8BIT_M
+ 204:lcd_lib.c     **** 	//8 mixed bits part
+ 205:lcd_lib.c     **** 	_delay_ms(15);
+ 206:lcd_lib.c     **** 	//zero to data pins
+ 207:lcd_lib.c     **** 	LCDMix_8Bit(0b00000000);
+ 208:lcd_lib.c     **** 	//zero to control pins
+ 209:lcd_lib.c     **** 	LDPRS &=~(1<<LCD_RS);
+ 210:lcd_lib.c     **** 	LDPRW &=~(1<<LCD_RW);
+ 211:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 212:lcd_lib.c     **** 	//set data direction
+ 213:lcd_lib.c     **** 	LDDD0 |=1<<LCD_D0;
+ 214:lcd_lib.c     **** 	LDDD1 |=1<<LCD_D1;
+ 215:lcd_lib.c     **** 	LDDD2 |=1<<LCD_D2;
+ 216:lcd_lib.c     **** 	LDDD3 |=1<<LCD_D3;
+ 217:lcd_lib.c     **** 	LDDD4 |=1<<LCD_D4;
+ 218:lcd_lib.c     **** 	LDDD5 |=1<<LCD_D5;
+ 219:lcd_lib.c     **** 	LDDD6 |=1<<LCD_D6;
+ 220:lcd_lib.c     **** 	LDDD7 |=1<<LCD_D7;
+ 221:lcd_lib.c     **** 	//control direction pins
+ 222:lcd_lib.c     **** 	LDDRS |=1<<LCD_RS;
+ 223:lcd_lib.c     **** 	LDDRW |=1<<LCD_RW;
+ 224:lcd_lib.c     **** 	LDDE |=1<<LCD_E;
+ 225:lcd_lib.c     ****    //---------one------
+ 226:lcd_lib.c     **** 	LCDMix_8Bit(0b00110000);
+ 227:lcd_lib.c     **** 	/*LDPD4 |=1<<LCD_D4;
+ 228:lcd_lib.c     **** 	LDPD5 |=1<<LCD_D5;*/
+ 229:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 230:lcd_lib.c     **** 	_delay_ms(1);
+ 231:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 232:lcd_lib.c     **** 	_delay_ms(1);
+ 233:lcd_lib.c     **** 	//-----------two-----------
+ 234:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 235:lcd_lib.c     **** 	_delay_ms(1);
+ 236:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 237:lcd_lib.c     **** 	_delay_ms(1);
+ 238:lcd_lib.c     **** 	//-------three-------------
+ 239:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 240:lcd_lib.c     **** 	_delay_ms(1);
+ 241:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 242:lcd_lib.c     **** 	_delay_ms(1);
+ 243:lcd_lib.c     **** 	//--------8 bit dual line----------
+ 244:lcd_lib.c     **** 	LCDsendCommand(0b00111000);
+ 245:lcd_lib.c     ****    //-----increment address, invisible cursor shift------
+ 246:lcd_lib.c     **** 	LCDsendCommand(0b00001100);
+ 247:lcd_lib.c     **** #endif
+ 248:lcd_lib.c     **** 		//init 8 custom chars
+ 249:lcd_lib.c     **** 	uint8_t ch=0, chn=0;
+ 250:lcd_lib.c     **** 	while(ch<64)
+ 251:lcd_lib.c     **** 	{
+ 252:lcd_lib.c     **** 		LCDdefinechar((LcdCustomChar+ch),chn++);
+ 253:lcd_lib.c     **** 		ch=ch+8;
+ 254:lcd_lib.c     **** 	}
+ 255:lcd_lib.c     **** }	
+ 256:lcd_lib.c     **** void LCDsendChar(uint8_t ch)		//Sends Char to LCD
+ 257:lcd_lib.c     **** {
+  73               		.loc 1 257 0
+  74               		.cfi_startproc
+  75               	.LVL3:
+  76 002a CF93      		push r28
+  77               	.LCFI0:
+  78               		.cfi_def_cfa_offset 3
+  79               		.cfi_offset 28, -2
+  80               	/* prologue: function */
+  81               	/* frame size = 0 */
+  82               	/* stack size = 1 */
+  83               	.L__stack_usage = 1
+  84 002c C82F      		mov r28,r24
+ 258:lcd_lib.c     **** 
+ 259:lcd_lib.c     **** #ifdef LCD_4BIT
+ 260:lcd_lib.c     **** 	//4 bit part
+ 261:lcd_lib.c     **** 	LDP=(ch & 0b11110000);
+ 262:lcd_lib.c     **** 	LCP|=1<<LCD_RS;
+ 263:lcd_lib.c     **** 	LCP|=1<<LCD_E;		
+ 264:lcd_lib.c     **** 	_delay_ms(1);
+ 265:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);	
+ 266:lcd_lib.c     **** 	LCP&=~(1<<LCD_RS);
+ 267:lcd_lib.c     **** 	_delay_ms(1);
+ 268:lcd_lib.c     **** 	LDP=((ch & 0b00001111)<<4);
+ 269:lcd_lib.c     **** 	LCP|=1<<LCD_RS;
+ 270:lcd_lib.c     **** 	LCP|=1<<LCD_E;		
+ 271:lcd_lib.c     **** 	_delay_ms(1);
+ 272:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);	
+ 273:lcd_lib.c     **** 	LCP&=~(1<<LCD_RS);
+ 274:lcd_lib.c     **** 	_delay_ms(1);
+ 275:lcd_lib.c     **** #endif
+ 276:lcd_lib.c     **** #ifdef LCD_8BIT
+ 277:lcd_lib.c     **** 	//8 bit part
+ 278:lcd_lib.c     **** 	LDP=ch;
+ 279:lcd_lib.c     **** 	LCP|=1<<LCD_RS;
+ 280:lcd_lib.c     **** 	LCP|=1<<LCD_E;		
+ 281:lcd_lib.c     **** 	_delay_ms(1);
+ 282:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);	
+ 283:lcd_lib.c     **** 	LCP&=~(1<<LCD_RS);
+ 284:lcd_lib.c     **** 	_delay_ms(1);
+ 285:lcd_lib.c     **** #endif
+ 286:lcd_lib.c     **** #ifdef LCD_4BIT_M
+ 287:lcd_lib.c     **** 	LCDMix_4Bit(ch & 0b11110000);
+  85               		.loc 1 287 0
+  86 002e 807F      		andi r24,lo8(-16)
+  87               	.LVL4:
+  88 0030 0E94 0000 		call LCDMix_4Bit
+  89               	.LVL5:
+ 288:lcd_lib.c     **** 	LDPRS |=1<<LCD_RS;
+  90               		.loc 1 288 0
+  91 0034 C59A      		sbi 0x18,5
+ 289:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+  92               		.loc 1 289 0
+  93 0036 C49A      		sbi 0x18,4
+  94               	.LVL6:
+  95               	.LBB36:
+  96               	.LBB37:
+  97               		.file 2 "/usr/lib/avr/include/util/delay.h"
+   1:/usr/lib/avr/include/util/delay.h **** /* Copyright (c) 2002, Marek Michalkiewicz
+   2:/usr/lib/avr/include/util/delay.h ****    Copyright (c) 2004,2005,2007 Joerg Wunsch
+   3:/usr/lib/avr/include/util/delay.h ****    Copyright (c) 2007  Florin-Viorel Petrov
+   4:/usr/lib/avr/include/util/delay.h ****    All rights reserved.
+   5:/usr/lib/avr/include/util/delay.h **** 
+   6:/usr/lib/avr/include/util/delay.h ****    Redistribution and use in source and binary forms, with or without
+   7:/usr/lib/avr/include/util/delay.h ****    modification, are permitted provided that the following conditions are met:
+   8:/usr/lib/avr/include/util/delay.h **** 
+   9:/usr/lib/avr/include/util/delay.h ****    * Redistributions of source code must retain the above copyright
+  10:/usr/lib/avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer.
+  11:/usr/lib/avr/include/util/delay.h **** 
+  12:/usr/lib/avr/include/util/delay.h ****    * Redistributions in binary form must reproduce the above copyright
+  13:/usr/lib/avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer in
+  14:/usr/lib/avr/include/util/delay.h ****      the documentation and/or other materials provided with the
+  15:/usr/lib/avr/include/util/delay.h ****      distribution.
+  16:/usr/lib/avr/include/util/delay.h **** 
+  17:/usr/lib/avr/include/util/delay.h ****    * Neither the name of the copyright holders nor the names of
+  18:/usr/lib/avr/include/util/delay.h ****      contributors may be used to endorse or promote products derived
+  19:/usr/lib/avr/include/util/delay.h ****      from this software without specific prior written permission.
+  20:/usr/lib/avr/include/util/delay.h **** 
+  21:/usr/lib/avr/include/util/delay.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  22:/usr/lib/avr/include/util/delay.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  23:/usr/lib/avr/include/util/delay.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  24:/usr/lib/avr/include/util/delay.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  25:/usr/lib/avr/include/util/delay.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  26:/usr/lib/avr/include/util/delay.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  27:/usr/lib/avr/include/util/delay.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  28:/usr/lib/avr/include/util/delay.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  29:/usr/lib/avr/include/util/delay.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  30:/usr/lib/avr/include/util/delay.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  31:/usr/lib/avr/include/util/delay.h ****   POSSIBILITY OF SUCH DAMAGE. */
+  32:/usr/lib/avr/include/util/delay.h **** 
+  33:/usr/lib/avr/include/util/delay.h **** /* $Id: delay.h.in 2251 2011-09-14 08:20:33Z joerg_wunsch $ */
+  34:/usr/lib/avr/include/util/delay.h **** 
+  35:/usr/lib/avr/include/util/delay.h **** #ifndef _UTIL_DELAY_H_
+  36:/usr/lib/avr/include/util/delay.h **** #define _UTIL_DELAY_H_ 1
+  37:/usr/lib/avr/include/util/delay.h **** 
+  38:/usr/lib/avr/include/util/delay.h **** #ifndef __HAS_DELAY_CYCLES
+  39:/usr/lib/avr/include/util/delay.h **** #define __HAS_DELAY_CYCLES 1
+  40:/usr/lib/avr/include/util/delay.h **** #endif
+  41:/usr/lib/avr/include/util/delay.h **** 
+  42:/usr/lib/avr/include/util/delay.h **** #include <inttypes.h>
+  43:/usr/lib/avr/include/util/delay.h **** #include <util/delay_basic.h>
+  44:/usr/lib/avr/include/util/delay.h **** #include <math.h>
+  45:/usr/lib/avr/include/util/delay.h **** 
+  46:/usr/lib/avr/include/util/delay.h **** /** \file */
+  47:/usr/lib/avr/include/util/delay.h **** /** \defgroup util_delay <util/delay.h>: Convenience functions for busy-wait delay loops
+  48:/usr/lib/avr/include/util/delay.h ****     \code
+  49:/usr/lib/avr/include/util/delay.h ****     #define F_CPU 1000000UL  // 1 MHz
+  50:/usr/lib/avr/include/util/delay.h ****     //#define F_CPU 14.7456E6
+  51:/usr/lib/avr/include/util/delay.h ****     #include <util/delay.h>
+  52:/usr/lib/avr/include/util/delay.h ****     \endcode
+  53:/usr/lib/avr/include/util/delay.h **** 
+  54:/usr/lib/avr/include/util/delay.h ****     \note As an alternative method, it is possible to pass the
+  55:/usr/lib/avr/include/util/delay.h ****     F_CPU macro down to the compiler from the Makefile.
+  56:/usr/lib/avr/include/util/delay.h ****     Obviously, in that case, no \c \#define statement should be
+  57:/usr/lib/avr/include/util/delay.h ****     used.
+  58:/usr/lib/avr/include/util/delay.h **** 
+  59:/usr/lib/avr/include/util/delay.h ****     The functions in this header file are wrappers around the basic
+  60:/usr/lib/avr/include/util/delay.h ****     busy-wait functions from <util/delay_basic.h>.  They are meant as
+  61:/usr/lib/avr/include/util/delay.h ****     convenience functions where actual time values can be specified
+  62:/usr/lib/avr/include/util/delay.h ****     rather than a number of cycles to wait for.  The idea behind is
+  63:/usr/lib/avr/include/util/delay.h ****     that compile-time constant expressions will be eliminated by
+  64:/usr/lib/avr/include/util/delay.h ****     compiler optimization so floating-point expressions can be used
+  65:/usr/lib/avr/include/util/delay.h ****     to calculate the number of delay cycles needed based on the CPU
+  66:/usr/lib/avr/include/util/delay.h ****     frequency passed by the macro F_CPU.
+  67:/usr/lib/avr/include/util/delay.h **** 
+  68:/usr/lib/avr/include/util/delay.h ****     \note In order for these functions to work as intended, compiler
+  69:/usr/lib/avr/include/util/delay.h ****     optimizations <em>must</em> be enabled, and the delay time
+  70:/usr/lib/avr/include/util/delay.h ****     <em>must</em> be an expression that is a known constant at
+  71:/usr/lib/avr/include/util/delay.h ****     compile-time.  If these requirements are not met, the resulting
+  72:/usr/lib/avr/include/util/delay.h ****     delay will be much longer (and basically unpredictable), and
+  73:/usr/lib/avr/include/util/delay.h ****     applications that otherwise do not use floating-point calculations
+  74:/usr/lib/avr/include/util/delay.h ****     will experience severe code bloat by the floating-point library
+  75:/usr/lib/avr/include/util/delay.h ****     routines linked into the application.
+  76:/usr/lib/avr/include/util/delay.h **** 
+  77:/usr/lib/avr/include/util/delay.h ****     The functions available allow the specification of microsecond, and
+  78:/usr/lib/avr/include/util/delay.h ****     millisecond delays directly, using the application-supplied macro
+  79:/usr/lib/avr/include/util/delay.h ****     F_CPU as the CPU clock frequency (in Hertz).
+  80:/usr/lib/avr/include/util/delay.h **** 
+  81:/usr/lib/avr/include/util/delay.h **** */
+  82:/usr/lib/avr/include/util/delay.h **** 
+  83:/usr/lib/avr/include/util/delay.h **** #if !defined(__DOXYGEN__)
+  84:/usr/lib/avr/include/util/delay.h **** static inline void _delay_us(double __us) __attribute__((always_inline));
+  85:/usr/lib/avr/include/util/delay.h **** static inline void _delay_ms(double __ms) __attribute__((always_inline));
+  86:/usr/lib/avr/include/util/delay.h **** #endif
+  87:/usr/lib/avr/include/util/delay.h **** 
+  88:/usr/lib/avr/include/util/delay.h **** #ifndef F_CPU
+  89:/usr/lib/avr/include/util/delay.h **** /* prevent compiler error by supplying a default */
+  90:/usr/lib/avr/include/util/delay.h **** # warning "F_CPU not defined for <util/delay.h>"
+  91:/usr/lib/avr/include/util/delay.h **** # define F_CPU 1000000UL
+  92:/usr/lib/avr/include/util/delay.h **** #endif
+  93:/usr/lib/avr/include/util/delay.h **** 
+  94:/usr/lib/avr/include/util/delay.h **** #ifndef __OPTIMIZE__
+  95:/usr/lib/avr/include/util/delay.h **** # warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+  96:/usr/lib/avr/include/util/delay.h **** #endif
+  97:/usr/lib/avr/include/util/delay.h **** 
+  98:/usr/lib/avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+  99:/usr/lib/avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 100:/usr/lib/avr/include/util/delay.h ****   __STDC_HOSTED__
+ 101:/usr/lib/avr/include/util/delay.h **** #  include <math.h>
+ 102:/usr/lib/avr/include/util/delay.h **** #endif
+ 103:/usr/lib/avr/include/util/delay.h **** 
+ 104:/usr/lib/avr/include/util/delay.h **** /**
+ 105:/usr/lib/avr/include/util/delay.h ****    \ingroup util_delay
+ 106:/usr/lib/avr/include/util/delay.h **** 
+ 107:/usr/lib/avr/include/util/delay.h ****    Perform a delay of \c __ms milliseconds, using _delay_loop_2().
+ 108:/usr/lib/avr/include/util/delay.h **** 
+ 109:/usr/lib/avr/include/util/delay.h ****    The macro F_CPU is supposed to be defined to a
+ 110:/usr/lib/avr/include/util/delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 111:/usr/lib/avr/include/util/delay.h **** 
+ 112:/usr/lib/avr/include/util/delay.h ****    The maximal possible delay is 262.14 ms / F_CPU in MHz.
+ 113:/usr/lib/avr/include/util/delay.h **** 
+ 114:/usr/lib/avr/include/util/delay.h ****    When the user request delay which exceed the maximum possible one,
+ 115:/usr/lib/avr/include/util/delay.h ****    _delay_ms() provides a decreased resolution functionality. In this
+ 116:/usr/lib/avr/include/util/delay.h ****    mode _delay_ms() will work with a resolution of 1/10 ms, providing
+ 117:/usr/lib/avr/include/util/delay.h ****    delays up to 6.5535 seconds (independent from CPU frequency).  The
+ 118:/usr/lib/avr/include/util/delay.h ****    user will not be informed about decreased resolution.
+ 119:/usr/lib/avr/include/util/delay.h **** 
+ 120:/usr/lib/avr/include/util/delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles(unsigned long)
+ 121:/usr/lib/avr/include/util/delay.h ****    support, maximal possible delay is 4294967.295 ms/ F_CPU in MHz. For
+ 122:/usr/lib/avr/include/util/delay.h ****    values greater than the maximal possible delay, overflows results in
+ 123:/usr/lib/avr/include/util/delay.h ****    no delay i.e., 0ms.
+ 124:/usr/lib/avr/include/util/delay.h **** 
+ 125:/usr/lib/avr/include/util/delay.h ****    Conversion of __us into clock cycles may not always result in integer.
+ 126:/usr/lib/avr/include/util/delay.h ****    By default, the clock cycles rounded up to next integer. This ensures that
+ 127:/usr/lib/avr/include/util/delay.h ****    the user gets atleast __us microseconds of delay.
+ 128:/usr/lib/avr/include/util/delay.h **** 
+ 129:/usr/lib/avr/include/util/delay.h ****    Alternatively, user can define __DELAY_ROUND_DOWN__ and __DELAY_ROUND_CLOSEST__
+ 130:/usr/lib/avr/include/util/delay.h ****    to round down and round to closest integer.
+ 131:/usr/lib/avr/include/util/delay.h **** 
+ 132:/usr/lib/avr/include/util/delay.h ****    Note: The new implementation of _delay_ms(double __ms) with 
+ 133:/usr/lib/avr/include/util/delay.h ****     __builtin_avr_delay_cycles(unsigned long) support is not backward compatible. 
+ 134:/usr/lib/avr/include/util/delay.h ****    User can define __DELAY_BACKWARD_COMPATIBLE__ to get a backward compatible delay.
+ 135:/usr/lib/avr/include/util/delay.h ****    Also, the backward compatible
+ 136:/usr/lib/avr/include/util/delay.h ****    algorithm will be chosen if the code is compiled in a <em>freestanding
+ 137:/usr/lib/avr/include/util/delay.h ****    environment</em> (GCC option \c -ffreestanding), as the math functions
+ 138:/usr/lib/avr/include/util/delay.h ****    required for rounding are not available to the compiler then.
+ 139:/usr/lib/avr/include/util/delay.h **** 
+ 140:/usr/lib/avr/include/util/delay.h ****  */
+ 141:/usr/lib/avr/include/util/delay.h **** void
+ 142:/usr/lib/avr/include/util/delay.h **** _delay_ms(double __ms)
+ 143:/usr/lib/avr/include/util/delay.h **** {
+ 144:/usr/lib/avr/include/util/delay.h **** 	uint16_t __ticks;
+ 145:/usr/lib/avr/include/util/delay.h **** 	double __tmp ; 
+ 146:/usr/lib/avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 147:/usr/lib/avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 148:/usr/lib/avr/include/util/delay.h ****   __STDC_HOSTED__
+ 149:/usr/lib/avr/include/util/delay.h **** 	uint32_t __ticks_dc;
+ 150:/usr/lib/avr/include/util/delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 151:/usr/lib/avr/include/util/delay.h **** 	__tmp = ((F_CPU) / 1e3) * __ms;
+ 152:/usr/lib/avr/include/util/delay.h **** 
+ 153:/usr/lib/avr/include/util/delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 154:/usr/lib/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 155:/usr/lib/avr/include/util/delay.h **** 
+ 156:/usr/lib/avr/include/util/delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 157:/usr/lib/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 158:/usr/lib/avr/include/util/delay.h **** 
+ 159:/usr/lib/avr/include/util/delay.h **** 	#else
+ 160:/usr/lib/avr/include/util/delay.h **** 		//round up by default
+ 161:/usr/lib/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 162:/usr/lib/avr/include/util/delay.h **** 	#endif
+ 163:/usr/lib/avr/include/util/delay.h **** 
+ 164:/usr/lib/avr/include/util/delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+  98               		.loc 2 164 0
+  99 0038 87EB      		ldi r24,lo8(2999)
+ 100 003a 9BE0      		ldi r25,hi8(2999)
+ 101 003c 0197      		1: sbiw r24,1
+ 102 003e 01F4      		brne 1b
+ 103 0040 00C0      		rjmp .
+ 104 0042 0000      		nop
+ 105               	.LBE37:
+ 106               	.LBE36:
+ 290:lcd_lib.c     **** 	_delay_ms(1);
+ 291:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 107               		.loc 1 291 0
+ 108 0044 C498      		cbi 0x18,4
+ 292:lcd_lib.c     **** 	LDPRS &=~(1<<LCD_RS);
+ 109               		.loc 1 292 0
+ 110 0046 C598      		cbi 0x18,5
+ 111               	.LVL7:
+ 112               	.LBB38:
+ 113               	.LBB39:
+ 114               		.loc 2 164 0
+ 115 0048 87EB      		ldi r24,lo8(2999)
+ 116 004a 9BE0      		ldi r25,hi8(2999)
+ 117 004c 0197      		1: sbiw r24,1
+ 118 004e 01F4      		brne 1b
+ 119 0050 00C0      		rjmp .
+ 120 0052 0000      		nop
+ 121               	.LBE39:
+ 122               	.LBE38:
+ 293:lcd_lib.c     **** 	_delay_ms(1);
+ 294:lcd_lib.c     **** 	LCDMix_4Bit((ch & 0b00001111)<<4);
+ 123               		.loc 1 294 0
+ 124 0054 8C2F      		mov r24,r28
+ 125 0056 8295      		swap r24
+ 126 0058 807F      		andi r24,lo8(-16)
+ 127 005a 0E94 0000 		call LCDMix_4Bit
+ 128               	.LVL8:
+ 295:lcd_lib.c     **** 	LDPRS |=1<<LCD_RS;
+ 129               		.loc 1 295 0
+ 130 005e C59A      		sbi 0x18,5
+ 296:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 131               		.loc 1 296 0
+ 132 0060 C49A      		sbi 0x18,4
+ 133               	.LVL9:
+ 134               	.LBB40:
+ 135               	.LBB41:
+ 136               		.loc 2 164 0
+ 137 0062 87EB      		ldi r24,lo8(2999)
+ 138 0064 9BE0      		ldi r25,hi8(2999)
+ 139 0066 0197      		1: sbiw r24,1
+ 140 0068 01F4      		brne 1b
+ 141 006a 00C0      		rjmp .
+ 142 006c 0000      		nop
+ 143               	.LBE41:
+ 144               	.LBE40:
+ 297:lcd_lib.c     **** 	_delay_ms(1);
+ 298:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 145               		.loc 1 298 0
+ 146 006e C498      		cbi 0x18,4
+ 299:lcd_lib.c     **** 	LDPRS &=~(1<<LCD_RS);
+ 147               		.loc 1 299 0
+ 148 0070 C598      		cbi 0x18,5
+ 149               	.LVL10:
+ 150               	.LBB42:
+ 151               	.LBB43:
+ 152               		.loc 2 164 0
+ 153 0072 87EB      		ldi r24,lo8(2999)
+ 154 0074 9BE0      		ldi r25,hi8(2999)
+ 155 0076 0197      		1: sbiw r24,1
+ 156 0078 01F4      		brne 1b
+ 157 007a 00C0      		rjmp .
+ 158 007c 0000      		nop
+ 159               	/* epilogue start */
+ 160               	.LBE43:
+ 161               	.LBE42:
+ 300:lcd_lib.c     **** 	_delay_ms(1);
+ 301:lcd_lib.c     **** #endif
+ 302:lcd_lib.c     **** #ifdef LCD_8BIT_M
+ 303:lcd_lib.c     **** 	LCDMix_8Bit(ch);
+ 304:lcd_lib.c     **** 	LDPRS |=1<<LCD_RS;
+ 305:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 306:lcd_lib.c     **** 	_delay_ms(1);
+ 307:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 308:lcd_lib.c     **** 	LDPRS &=~(1<<LCD_RS);
+ 309:lcd_lib.c     **** 	_delay_ms(1);	
+ 310:lcd_lib.c     **** #endif
+ 311:lcd_lib.c     **** }
+ 162               		.loc 1 311 0
+ 163 007e CF91      		pop r28
+ 164               	.LVL11:
+ 165 0080 0895      		ret
+ 166               		.cfi_endproc
+ 167               	.LFE9:
+ 169               	.global	LCDsendCommand
+ 171               	LCDsendCommand:
+ 172               	.LFB10:
+ 312:lcd_lib.c     **** void LCDsendCommand(uint8_t cmd)	//Sends Command to LCD
+ 313:lcd_lib.c     **** {
+ 173               		.loc 1 313 0
+ 174               		.cfi_startproc
+ 175               	.LVL12:
+ 176 0082 CF93      		push r28
+ 177               	.LCFI1:
+ 178               		.cfi_def_cfa_offset 3
+ 179               		.cfi_offset 28, -2
+ 180               	/* prologue: function */
+ 181               	/* frame size = 0 */
+ 182               	/* stack size = 1 */
+ 183               	.L__stack_usage = 1
+ 184 0084 C82F      		mov r28,r24
+ 314:lcd_lib.c     **** #ifdef LCD_4BIT	
+ 315:lcd_lib.c     **** 	//4 bit part
+ 316:lcd_lib.c     **** 	LDP=(cmd & 0b11110000);
+ 317:lcd_lib.c     **** 	LCP|=1<<LCD_E;		
+ 318:lcd_lib.c     **** 	_delay_ms(1);
+ 319:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 320:lcd_lib.c     **** 	_delay_ms(1);
+ 321:lcd_lib.c     **** 	LDP=((cmd & 0b00001111)<<4);	
+ 322:lcd_lib.c     **** 	LCP|=1<<LCD_E;		
+ 323:lcd_lib.c     **** 	_delay_ms(1);
+ 324:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 325:lcd_lib.c     **** 	_delay_ms(1);
+ 326:lcd_lib.c     **** #endif
+ 327:lcd_lib.c     **** #ifdef LCD_8BIT
+ 328:lcd_lib.c     **** 	//8 bit part
+ 329:lcd_lib.c     **** 	LDP=cmd;
+ 330:lcd_lib.c     **** 	LCP|=1<<LCD_E;		
+ 331:lcd_lib.c     **** 	_delay_ms(1);
+ 332:lcd_lib.c     **** 	LCP&=~(1<<LCD_E);
+ 333:lcd_lib.c     **** 	_delay_ms(1);	
+ 334:lcd_lib.c     **** #endif
+ 335:lcd_lib.c     **** #ifdef LCD_4BIT_M
+ 336:lcd_lib.c     **** 	LCDMix_4Bit(cmd & 0b11110000);
+ 185               		.loc 1 336 0
+ 186 0086 807F      		andi r24,lo8(-16)
+ 187               	.LVL13:
+ 188 0088 0E94 0000 		call LCDMix_4Bit
+ 189               	.LVL14:
+ 337:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 190               		.loc 1 337 0
+ 191 008c C49A      		sbi 0x18,4
+ 192               	.LVL15:
+ 193               	.LBB44:
+ 194               	.LBB45:
+ 195               		.loc 2 164 0
+ 196 008e 87EB      		ldi r24,lo8(2999)
+ 197 0090 9BE0      		ldi r25,hi8(2999)
+ 198 0092 0197      		1: sbiw r24,1
+ 199 0094 01F4      		brne 1b
+ 200 0096 00C0      		rjmp .
+ 201 0098 0000      		nop
+ 202               	.LBE45:
+ 203               	.LBE44:
+ 338:lcd_lib.c     **** 	_delay_ms(1);
+ 339:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 204               		.loc 1 339 0
+ 205 009a C498      		cbi 0x18,4
+ 206               	.LVL16:
+ 207               	.LBB46:
+ 208               	.LBB47:
+ 209               		.loc 2 164 0
+ 210 009c 87EB      		ldi r24,lo8(2999)
+ 211 009e 9BE0      		ldi r25,hi8(2999)
+ 212 00a0 0197      		1: sbiw r24,1
+ 213 00a2 01F4      		brne 1b
+ 214 00a4 00C0      		rjmp .
+ 215 00a6 0000      		nop
+ 216               	.LBE47:
+ 217               	.LBE46:
+ 340:lcd_lib.c     **** 	_delay_ms(1);
+ 341:lcd_lib.c     **** 	LCDMix_4Bit((cmd & 0b00001111)<<4);
+ 218               		.loc 1 341 0
+ 219 00a8 8C2F      		mov r24,r28
+ 220 00aa 8295      		swap r24
+ 221 00ac 807F      		andi r24,lo8(-16)
+ 222 00ae 0E94 0000 		call LCDMix_4Bit
+ 223               	.LVL17:
+ 342:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 224               		.loc 1 342 0
+ 225 00b2 C49A      		sbi 0x18,4
+ 226               	.LVL18:
+ 227               	.LBB48:
+ 228               	.LBB49:
+ 229               		.loc 2 164 0
+ 230 00b4 87EB      		ldi r24,lo8(2999)
+ 231 00b6 9BE0      		ldi r25,hi8(2999)
+ 232 00b8 0197      		1: sbiw r24,1
+ 233 00ba 01F4      		brne 1b
+ 234 00bc 00C0      		rjmp .
+ 235 00be 0000      		nop
+ 236               	.LBE49:
+ 237               	.LBE48:
+ 343:lcd_lib.c     **** 	_delay_ms(1);
+ 344:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 238               		.loc 1 344 0
+ 239 00c0 C498      		cbi 0x18,4
+ 240               	.LVL19:
+ 241               	.LBB50:
+ 242               	.LBB51:
+ 243               		.loc 2 164 0
+ 244 00c2 87EB      		ldi r24,lo8(2999)
+ 245 00c4 9BE0      		ldi r25,hi8(2999)
+ 246 00c6 0197      		1: sbiw r24,1
+ 247 00c8 01F4      		brne 1b
+ 248 00ca 00C0      		rjmp .
+ 249 00cc 0000      		nop
+ 250               	/* epilogue start */
+ 251               	.LBE51:
+ 252               	.LBE50:
+ 345:lcd_lib.c     **** 	_delay_ms(1);
+ 346:lcd_lib.c     **** #endif
+ 347:lcd_lib.c     **** #ifdef LCD_8BIT_M
+ 348:lcd_lib.c     **** 	LCDMix_8Bit(cmd);
+ 349:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 350:lcd_lib.c     **** 	_delay_ms(1);
+ 351:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 352:lcd_lib.c     **** 	_delay_ms(1);	
+ 353:lcd_lib.c     **** #endif
+ 354:lcd_lib.c     **** }		
+ 253               		.loc 1 354 0
+ 254 00ce CF91      		pop r28
+ 255               	.LVL20:
+ 256 00d0 0895      		ret
+ 257               		.cfi_endproc
+ 258               	.LFE10:
+ 260               	.global	LCDclr
+ 262               	LCDclr:
+ 263               	.LFB11:
+ 355:lcd_lib.c     **** void LCDclr(void)				//Clears LCD
+ 356:lcd_lib.c     **** {
+ 264               		.loc 1 356 0
+ 265               		.cfi_startproc
+ 266               	/* prologue: function */
+ 267               	/* frame size = 0 */
+ 268               	/* stack size = 0 */
+ 269               	.L__stack_usage = 0
+ 357:lcd_lib.c     **** 	LCDsendCommand(1<<LCD_CLR);
+ 270               		.loc 1 357 0
+ 271 00d2 81E0      		ldi r24,lo8(1)
+ 272 00d4 0C94 0000 		jmp LCDsendCommand
+ 273               	.LVL21:
+ 274               		.cfi_endproc
+ 275               	.LFE11:
+ 277               	.global	LCDhome
+ 279               	LCDhome:
+ 280               	.LFB12:
+ 358:lcd_lib.c     **** }
+ 359:lcd_lib.c     **** void LCDhome(void)			//LCD cursor home
+ 360:lcd_lib.c     **** {
+ 281               		.loc 1 360 0
+ 282               		.cfi_startproc
+ 283               	/* prologue: function */
+ 284               	/* frame size = 0 */
+ 285               	/* stack size = 0 */
+ 286               	.L__stack_usage = 0
+ 361:lcd_lib.c     **** 	LCDsendCommand(1<<LCD_HOME);
+ 287               		.loc 1 361 0
+ 288 00d8 82E0      		ldi r24,lo8(2)
+ 289 00da 0C94 0000 		jmp LCDsendCommand
+ 290               	.LVL22:
+ 291               		.cfi_endproc
+ 292               	.LFE12:
+ 294               	.global	LCDstring
+ 296               	LCDstring:
+ 297               	.LFB13:
+ 362:lcd_lib.c     **** }
+ 363:lcd_lib.c     **** void LCDstring(uint8_t* data, uint8_t nBytes)	//Outputs string to LCD
+ 364:lcd_lib.c     **** {
+ 298               		.loc 1 364 0
+ 299               		.cfi_startproc
+ 300               	.LVL23:
+ 301 00de EF92      		push r14
+ 302               	.LCFI2:
+ 303               		.cfi_def_cfa_offset 3
+ 304               		.cfi_offset 14, -2
+ 305 00e0 FF92      		push r15
+ 306               	.LCFI3:
+ 307               		.cfi_def_cfa_offset 4
+ 308               		.cfi_offset 15, -3
+ 309 00e2 1F93      		push r17
+ 310               	.LCFI4:
+ 311               		.cfi_def_cfa_offset 5
+ 312               		.cfi_offset 17, -4
+ 313 00e4 CF93      		push r28
+ 314               	.LCFI5:
+ 315               		.cfi_def_cfa_offset 6
+ 316               		.cfi_offset 28, -5
+ 317 00e6 DF93      		push r29
+ 318               	.LCFI6:
+ 319               		.cfi_def_cfa_offset 7
+ 320               		.cfi_offset 29, -6
+ 321 00e8 1F92      		push __zero_reg__
+ 322               	.LCFI7:
+ 323               		.cfi_def_cfa_offset 8
+ 324 00ea CDB7      		in r28,__SP_L__
+ 325 00ec DEB7      		in r29,__SP_H__
+ 326               	.LCFI8:
+ 327               		.cfi_def_cfa_register 28
+ 328               	/* prologue: function */
+ 329               	/* frame size = 1 */
+ 330               	/* stack size = 6 */
+ 331               	.L__stack_usage = 6
+ 365:lcd_lib.c     **** register uint8_t i;
+ 366:lcd_lib.c     **** 
+ 367:lcd_lib.c     **** 	// check to make sure we have a good pointer
+ 368:lcd_lib.c     **** 	if (!data) return;
+ 332               		.loc 1 368 0
+ 333 00ee 0097      		sbiw r24,0
+ 334 00f0 01F0      		breq .L15
+ 335 00f2 182F      		mov r17,r24
+ 336 00f4 7C01      		movw r14,r24
+ 337               	.LVL24:
+ 338               	.L17:
+ 339 00f6 8E2D      		mov r24,r14
+ 340 00f8 811B      		sub r24,r17
+ 369:lcd_lib.c     **** 
+ 370:lcd_lib.c     **** 	// print data
+ 371:lcd_lib.c     **** 	for(i=0; i<nBytes; i++)
+ 341               		.loc 1 371 0 discriminator 1
+ 342 00fa 8617      		cp r24,r22
+ 343 00fc 00F4      		brsh .L15
+ 372:lcd_lib.c     **** 	{
+ 373:lcd_lib.c     **** 		LCDsendChar(data[i]);
+ 344               		.loc 1 373 0 discriminator 2
+ 345 00fe F701      		movw r30,r14
+ 346 0100 8191      		ld r24,Z+
+ 347 0102 7F01      		movw r14,r30
+ 348               	.LVL25:
+ 349 0104 6983      		std Y+1,r22
+ 350 0106 0E94 0000 		call LCDsendChar
+ 351               	.LVL26:
+ 352 010a 6981      		ldd r22,Y+1
+ 353 010c 00C0      		rjmp .L17
+ 354               	.LVL27:
+ 355               	.L15:
+ 356               	/* epilogue start */
+ 374:lcd_lib.c     **** 	}
+ 375:lcd_lib.c     **** }
+ 357               		.loc 1 375 0
+ 358 010e 0F90      		pop __tmp_reg__
+ 359 0110 DF91      		pop r29
+ 360 0112 CF91      		pop r28
+ 361 0114 1F91      		pop r17
+ 362 0116 FF90      		pop r15
+ 363 0118 EF90      		pop r14
+ 364 011a 0895      		ret
+ 365               		.cfi_endproc
+ 366               	.LFE13:
+ 368               	.global	LCDGotoXY
+ 370               	LCDGotoXY:
+ 371               	.LFB14:
+ 376:lcd_lib.c     **** void LCDGotoXY(uint8_t x, uint8_t y)	//Cursor to X Y position
+ 377:lcd_lib.c     **** {
+ 372               		.loc 1 377 0
+ 373               		.cfi_startproc
+ 374               	.LVL28:
+ 375               	/* prologue: function */
+ 376               	/* frame size = 0 */
+ 377               	/* stack size = 0 */
+ 378               	.L__stack_usage = 0
+ 378:lcd_lib.c     **** 	register uint8_t DDRAMAddr;
+ 379:lcd_lib.c     **** 	// remap lines into proper order
+ 380:lcd_lib.c     **** 	switch(y)
+ 379               		.loc 1 380 0
+ 380 011c 6230      		cpi r22,lo8(2)
+ 381 011e 01F0      		breq .L24
+ 382 0120 6330      		cpi r22,lo8(3)
+ 383 0122 01F0      		breq .L25
+ 384 0124 6130      		cpi r22,lo8(1)
+ 385 0126 01F4      		brne .L23
+ 381:lcd_lib.c     **** 	{
+ 382:lcd_lib.c     **** 	case 0: DDRAMAddr = LCD_LINE0_DDRAMADDR+x; break;
+ 383:lcd_lib.c     **** 	case 1: DDRAMAddr = LCD_LINE1_DDRAMADDR+x; break;
+ 386               		.loc 1 383 0
+ 387 0128 805C      		subi r24,lo8(-(64))
+ 388               	.LVL29:
+ 389 012a 00C0      		rjmp .L23
+ 390               	.LVL30:
+ 391               	.L24:
+ 384:lcd_lib.c     **** 	case 2: DDRAMAddr = LCD_LINE2_DDRAMADDR+x; break;
+ 392               		.loc 1 384 0
+ 393 012c 8C5E      		subi r24,lo8(-(20))
+ 394               	.LVL31:
+ 395 012e 00C0      		rjmp .L23
+ 396               	.LVL32:
+ 397               	.L25:
+ 385:lcd_lib.c     **** 	case 3: DDRAMAddr = LCD_LINE3_DDRAMADDR+x; break;
+ 398               		.loc 1 385 0
+ 399 0130 8C5A      		subi r24,lo8(-(84))
+ 400               	.LVL33:
+ 401               	.L23:
+ 386:lcd_lib.c     **** 	default: DDRAMAddr = LCD_LINE0_DDRAMADDR+x;
+ 387:lcd_lib.c     **** 	}
+ 388:lcd_lib.c     **** 	// set data address
+ 389:lcd_lib.c     **** 	LCDsendCommand(1<<LCD_DDRAM | DDRAMAddr);
+ 402               		.loc 1 389 0
+ 403 0132 8068      		ori r24,lo8(-128)
+ 404               	.LVL34:
+ 405 0134 0C94 0000 		jmp LCDsendCommand
+ 406               	.LVL35:
+ 407               		.cfi_endproc
+ 408               	.LFE14:
+ 410               	.global	CopyStringtoLCD
+ 412               	CopyStringtoLCD:
+ 413               	.LFB15:
+ 390:lcd_lib.c     **** 	
+ 391:lcd_lib.c     **** }
+ 392:lcd_lib.c     **** //Copies string from flash memory to LCD at x y position
+ 393:lcd_lib.c     **** //const uint8_t welcomeln1[] PROGMEM="AVR LCD DEMO\0";
+ 394:lcd_lib.c     **** //CopyStringtoLCD(welcomeln1, 3, 1);	
+ 395:lcd_lib.c     **** void CopyStringtoLCD(const uint8_t *FlashLoc, uint8_t x, uint8_t y)
+ 396:lcd_lib.c     **** {
+ 414               		.loc 1 396 0
+ 415               		.cfi_startproc
+ 416               	.LVL36:
+ 417 0138 1F93      		push r17
+ 418               	.LCFI9:
+ 419               		.cfi_def_cfa_offset 3
+ 420               		.cfi_offset 17, -2
+ 421 013a CF93      		push r28
+ 422               	.LCFI10:
+ 423               		.cfi_def_cfa_offset 4
+ 424               		.cfi_offset 28, -3
+ 425 013c DF93      		push r29
+ 426               	.LCFI11:
+ 427               		.cfi_def_cfa_offset 5
+ 428               		.cfi_offset 29, -4
+ 429               	/* prologue: function */
+ 430               	/* frame size = 0 */
+ 431               	/* stack size = 3 */
+ 432               	.L__stack_usage = 3
+ 433 013e EC01      		movw r28,r24
+ 434 0140 862F      		mov r24,r22
+ 435               	.LVL37:
+ 397:lcd_lib.c     **** 	uint8_t i;
+ 398:lcd_lib.c     **** 	LCDGotoXY(x,y);
+ 436               		.loc 1 398 0
+ 437 0142 642F      		mov r22,r20
+ 438               	.LVL38:
+ 439 0144 0E94 0000 		call LCDGotoXY
+ 440               	.LVL39:
+ 399:lcd_lib.c     **** 	for(i=0;(uint8_t)pgm_read_byte(&FlashLoc[i]);i++)
+ 441               		.loc 1 399 0
+ 442 0148 10E0      		ldi r17,0
+ 443               	.LVL40:
+ 444               	.L28:
+ 445               	.LBB52:
+ 446               		.loc 1 399 0 is_stmt 0 discriminator 1
+ 447 014a FE01      		movw r30,r28
+ 448 014c E10F      		add r30,r17
+ 449 014e F11D      		adc r31,__zero_reg__
+ 450               	.LVL41:
+ 451               	/* #APP */
+ 452               	 ;  399 "lcd_lib.c" 1
+ 453 0150 8491      		lpm r24, Z
+ 454               		
+ 455               	 ;  0 "" 2
+ 456               	.LVL42:
+ 457               	/* #NOAPP */
+ 458               	.LBE52:
+ 459 0152 8823      		tst r24
+ 460 0154 01F0      		breq .L30
+ 461               	.LVL43:
+ 400:lcd_lib.c     **** 	{
+ 401:lcd_lib.c     **** 		LCDsendChar((uint8_t)pgm_read_byte(&FlashLoc[i]));
+ 462               		.loc 1 401 0 is_stmt 1 discriminator 2
+ 463 0156 0E94 0000 		call LCDsendChar
+ 464               	.LVL44:
+ 399:lcd_lib.c     **** 	for(i=0;(uint8_t)pgm_read_byte(&FlashLoc[i]);i++)
+ 465               		.loc 1 399 0 discriminator 2
+ 466 015a 1F5F      		subi r17,lo8(-(1))
+ 467               	.LVL45:
+ 468 015c 00C0      		rjmp .L28
+ 469               	.LVL46:
+ 470               	.L30:
+ 471               	/* epilogue start */
+ 402:lcd_lib.c     **** 	}
+ 403:lcd_lib.c     **** }
+ 472               		.loc 1 403 0
+ 473 015e DF91      		pop r29
+ 474 0160 CF91      		pop r28
+ 475               	.LVL47:
+ 476 0162 1F91      		pop r17
+ 477               	.LVL48:
+ 478 0164 0895      		ret
+ 479               		.cfi_endproc
+ 480               	.LFE15:
+ 482               	.global	LCDdefinechar
+ 484               	LCDdefinechar:
+ 485               	.LFB16:
+ 404:lcd_lib.c     **** //defines char symbol in CGRAM
+ 405:lcd_lib.c     **** /*
+ 406:lcd_lib.c     **** const uint8_t backslash[] PROGMEM= 
+ 407:lcd_lib.c     **** {
+ 408:lcd_lib.c     **** 0b00000000,//back slash
+ 409:lcd_lib.c     **** 0b00010000,
+ 410:lcd_lib.c     **** 0b00001000,
+ 411:lcd_lib.c     **** 0b00000100,
+ 412:lcd_lib.c     **** 0b00000010,
+ 413:lcd_lib.c     **** 0b00000001,
+ 414:lcd_lib.c     **** 0b00000000,
+ 415:lcd_lib.c     **** 0b00000000
+ 416:lcd_lib.c     **** };
+ 417:lcd_lib.c     **** LCDdefinechar(backslash,0);
+ 418:lcd_lib.c     **** */
+ 419:lcd_lib.c     **** void LCDdefinechar(const uint8_t *pc,uint8_t char_code){
+ 486               		.loc 1 419 0
+ 487               		.cfi_startproc
+ 488               	.LVL49:
+ 489 0166 EF92      		push r14
+ 490               	.LCFI12:
+ 491               		.cfi_def_cfa_offset 3
+ 492               		.cfi_offset 14, -2
+ 493 0168 FF92      		push r15
+ 494               	.LCFI13:
+ 495               		.cfi_def_cfa_offset 4
+ 496               		.cfi_offset 15, -3
+ 497 016a 0F93      		push r16
+ 498               	.LCFI14:
+ 499               		.cfi_def_cfa_offset 5
+ 500               		.cfi_offset 16, -4
+ 501 016c 1F93      		push r17
+ 502               	.LCFI15:
+ 503               		.cfi_def_cfa_offset 6
+ 504               		.cfi_offset 17, -5
+ 505 016e CF93      		push r28
+ 506               	.LCFI16:
+ 507               		.cfi_def_cfa_offset 7
+ 508               		.cfi_offset 28, -6
+ 509 0170 DF93      		push r29
+ 510               	.LCFI17:
+ 511               		.cfi_def_cfa_offset 8
+ 512               		.cfi_offset 29, -7
+ 513               	/* prologue: function */
+ 514               	/* frame size = 0 */
+ 515               	/* stack size = 6 */
+ 516               	.L__stack_usage = 6
+ 517 0172 8C01      		movw r16,r24
+ 420:lcd_lib.c     **** 	uint8_t a, pcc;
+ 421:lcd_lib.c     **** 	uint16_t i;
+ 422:lcd_lib.c     **** 	a=(char_code<<3)|0x40;
+ 518               		.loc 1 422 0
+ 519 0174 88E0      		ldi r24,lo8(8)
+ 520               	.LVL50:
+ 521 0176 689F      		mul r22,r24
+ 522 0178 B001      		movw r22,r0
+ 523 017a 1124      		clr __zero_reg__
+ 524               	.LVL51:
+ 525 017c 862F      		mov r24,r22
+ 526 017e 8064      		ori r24,lo8(64)
+ 527 0180 E82E      		mov r14,r24
+ 528               	.LVL52:
+ 423:lcd_lib.c     **** 	for (i=0; i<8; i++){
+ 529               		.loc 1 423 0
+ 530 0182 C0E0      		ldi r28,0
+ 531 0184 D0E0      		ldi r29,0
+ 532               	.LVL53:
+ 533               	.L33:
+ 534 0186 F801      		movw r30,r16
+ 535 0188 EC0F      		add r30,r28
+ 536 018a FD1F      		adc r31,r29
+ 537               	.LVL54:
+ 538               	.LBB53:
+ 424:lcd_lib.c     **** 		pcc=pgm_read_byte(&pc[i]);
+ 539               		.loc 1 424 0 discriminator 2
+ 540               	/* #APP */
+ 541               	 ;  424 "lcd_lib.c" 1
+ 542 018c F490      		lpm r15, Z
+ 543               		
+ 544               	 ;  0 "" 2
+ 545               	.LVL55:
+ 546               	/* #NOAPP */
+ 547               	.LBE53:
+ 425:lcd_lib.c     **** 		LCDsendCommand(a++);
+ 548               		.loc 1 425 0 discriminator 2
+ 549 018e 8C2F      		mov r24,r28
+ 550 0190 8E0D      		add r24,r14
+ 551 0192 0E94 0000 		call LCDsendCommand
+ 552               	.LVL56:
+ 426:lcd_lib.c     **** 		LCDsendChar(pcc);
+ 553               		.loc 1 426 0 discriminator 2
+ 554 0196 8F2D      		mov r24,r15
+ 555 0198 0E94 0000 		call LCDsendChar
+ 556               	.LVL57:
+ 423:lcd_lib.c     **** 	for (i=0; i<8; i++){
+ 557               		.loc 1 423 0 discriminator 2
+ 558 019c 2196      		adiw r28,1
+ 559               	.LVL58:
+ 560 019e C830      		cpi r28,8
+ 561 01a0 D105      		cpc r29,__zero_reg__
+ 562 01a2 01F4      		brne .L33
+ 563               	/* epilogue start */
+ 427:lcd_lib.c     **** 		}
+ 428:lcd_lib.c     **** }
+ 564               		.loc 1 428 0
+ 565 01a4 DF91      		pop r29
+ 566 01a6 CF91      		pop r28
+ 567               	.LVL59:
+ 568 01a8 1F91      		pop r17
+ 569 01aa 0F91      		pop r16
+ 570               	.LVL60:
+ 571 01ac FF90      		pop r15
+ 572               	.LVL61:
+ 573 01ae EF90      		pop r14
+ 574 01b0 0895      		ret
+ 575               		.cfi_endproc
+ 576               	.LFE16:
+ 578               	.global	LCDinit
+ 580               	LCDinit:
+ 581               	.LFB8:
+  77:lcd_lib.c     **** {
+ 582               		.loc 1 77 0
+ 583               		.cfi_startproc
+ 584 01b2 1F93      		push r17
+ 585               	.LCFI18:
+ 586               		.cfi_def_cfa_offset 3
+ 587               		.cfi_offset 17, -2
+ 588 01b4 CF93      		push r28
+ 589               	.LCFI19:
+ 590               		.cfi_def_cfa_offset 4
+ 591               		.cfi_offset 28, -3
+ 592 01b6 DF93      		push r29
+ 593               	.LCFI20:
+ 594               		.cfi_def_cfa_offset 5
+ 595               		.cfi_offset 29, -4
+ 596               	/* prologue: function */
+ 597               	/* frame size = 0 */
+ 598               	/* stack size = 3 */
+ 599               	.L__stack_usage = 3
+ 600               	.LVL62:
+ 601               	.LBB54:
+ 602               	.LBB55:
+ 603               		.loc 2 164 0
+ 604 01b8 87EC      		ldi r24,lo8(-20537)
+ 605 01ba 9FEA      		ldi r25,hi8(-20537)
+ 606 01bc 0197      		1: sbiw r24,1
+ 607 01be 01F4      		brne 1b
+ 608 01c0 00C0      		rjmp .
+ 609 01c2 0000      		nop
+ 610               	.LBE55:
+ 611               	.LBE54:
+ 165:lcd_lib.c     **** 	LCDMix_4Bit(0b00000000);
+ 612               		.loc 1 165 0
+ 613 01c4 80E0      		ldi r24,0
+ 614 01c6 0E94 0000 		call LCDMix_4Bit
+ 615               	.LVL63:
+ 167:lcd_lib.c     **** 	LDPRS &=~(1<<LCD_RS);
+ 616               		.loc 1 167 0
+ 617 01ca C598      		cbi 0x18,5
+ 168:lcd_lib.c     **** 	LDPRW &=~(1<<LCD_RW);
+ 618               		.loc 1 168 0
+ 619 01cc C798      		cbi 0x18,7
+ 169:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 620               		.loc 1 169 0
+ 621 01ce C498      		cbi 0x18,4
+ 171:lcd_lib.c     **** 	LDDD4 |=1<<LCD_D4;
+ 622               		.loc 1 171 0
+ 623 01d0 BB9A      		sbi 0x17,3
+ 172:lcd_lib.c     **** 	LDDD5 |=1<<LCD_D5;
+ 624               		.loc 1 172 0
+ 625 01d2 BA9A      		sbi 0x17,2
+ 173:lcd_lib.c     **** 	LDDD6 |=1<<LCD_D6;
+ 626               		.loc 1 173 0
+ 627 01d4 B99A      		sbi 0x17,1
+ 174:lcd_lib.c     **** 	LDDD7 |=1<<LCD_D7;
+ 628               		.loc 1 174 0
+ 629 01d6 B89A      		sbi 0x17,0
+ 176:lcd_lib.c     **** 	LDDRS |=1<<LCD_RS;
+ 630               		.loc 1 176 0
+ 631 01d8 BD9A      		sbi 0x17,5
+ 177:lcd_lib.c     **** 	LDDRW |=1<<LCD_RW;
+ 632               		.loc 1 177 0
+ 633 01da BF9A      		sbi 0x17,7
+ 178:lcd_lib.c     **** 	LDDE |=1<<LCD_E;
+ 634               		.loc 1 178 0
+ 635 01dc BC9A      		sbi 0x17,4
+ 180:lcd_lib.c     **** 	LCDMix_4Bit(0b00110000);
+ 636               		.loc 1 180 0
+ 637 01de 80E3      		ldi r24,lo8(48)
+ 638 01e0 0E94 0000 		call LCDMix_4Bit
+ 639               	.LVL64:
+ 181:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 640               		.loc 1 181 0
+ 641 01e4 C49A      		sbi 0x18,4
+ 642               	.LVL65:
+ 643               	.LBB56:
+ 644               	.LBB57:
+ 645               		.loc 2 164 0
+ 646 01e6 87EB      		ldi r24,lo8(2999)
+ 647 01e8 9BE0      		ldi r25,hi8(2999)
+ 648 01ea 0197      		1: sbiw r24,1
+ 649 01ec 01F4      		brne 1b
+ 650 01ee 00C0      		rjmp .
+ 651 01f0 0000      		nop
+ 652               	.LBE57:
+ 653               	.LBE56:
+ 183:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 654               		.loc 1 183 0
+ 655 01f2 C498      		cbi 0x18,4
+ 656               	.LVL66:
+ 657               	.LBB58:
+ 658               	.LBB59:
+ 659               		.loc 2 164 0
+ 660 01f4 87EB      		ldi r24,lo8(2999)
+ 661 01f6 9BE0      		ldi r25,hi8(2999)
+ 662 01f8 0197      		1: sbiw r24,1
+ 663 01fa 01F4      		brne 1b
+ 664 01fc 00C0      		rjmp .
+ 665 01fe 0000      		nop
+ 666               	.LBE59:
+ 667               	.LBE58:
+ 186:lcd_lib.c     **** 	LCDMix_4Bit(0b00110000);
+ 668               		.loc 1 186 0
+ 669 0200 80E3      		ldi r24,lo8(48)
+ 670 0202 0E94 0000 		call LCDMix_4Bit
+ 671               	.LVL67:
+ 187:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 672               		.loc 1 187 0
+ 673 0206 C49A      		sbi 0x18,4
+ 674               	.LVL68:
+ 675               	.LBB60:
+ 676               	.LBB61:
+ 677               		.loc 2 164 0
+ 678 0208 87EB      		ldi r24,lo8(2999)
+ 679 020a 9BE0      		ldi r25,hi8(2999)
+ 680 020c 0197      		1: sbiw r24,1
+ 681 020e 01F4      		brne 1b
+ 682 0210 00C0      		rjmp .
+ 683 0212 0000      		nop
+ 684               	.LBE61:
+ 685               	.LBE60:
+ 189:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 686               		.loc 1 189 0
+ 687 0214 C498      		cbi 0x18,4
+ 688               	.LVL69:
+ 689               	.LBB62:
+ 690               	.LBB63:
+ 691               		.loc 2 164 0
+ 692 0216 87EB      		ldi r24,lo8(2999)
+ 693 0218 9BE0      		ldi r25,hi8(2999)
+ 694 021a 0197      		1: sbiw r24,1
+ 695 021c 01F4      		brne 1b
+ 696 021e 00C0      		rjmp .
+ 697 0220 0000      		nop
+ 698               	.LBE63:
+ 699               	.LBE62:
+ 192:lcd_lib.c     **** 	LCDMix_4Bit(0b00100000);
+ 700               		.loc 1 192 0
+ 701 0222 80E2      		ldi r24,lo8(32)
+ 702 0224 0E94 0000 		call LCDMix_4Bit
+ 703               	.LVL70:
+ 193:lcd_lib.c     **** 	LDPE |=1<<LCD_E;		
+ 704               		.loc 1 193 0
+ 705 0228 C49A      		sbi 0x18,4
+ 706               	.LVL71:
+ 707               	.LBB64:
+ 708               	.LBB65:
+ 709               		.loc 2 164 0
+ 710 022a 87EB      		ldi r24,lo8(2999)
+ 711 022c 9BE0      		ldi r25,hi8(2999)
+ 712 022e 0197      		1: sbiw r24,1
+ 713 0230 01F4      		brne 1b
+ 714 0232 00C0      		rjmp .
+ 715 0234 0000      		nop
+ 716               	.LBE65:
+ 717               	.LBE64:
+ 195:lcd_lib.c     **** 	LDPE &=~(1<<LCD_E);
+ 718               		.loc 1 195 0
+ 719 0236 C498      		cbi 0x18,4
+ 720               	.LVL72:
+ 721               	.LBB66:
+ 722               	.LBB67:
+ 723               		.loc 2 164 0
+ 724 0238 87EB      		ldi r24,lo8(2999)
+ 725 023a 9BE0      		ldi r25,hi8(2999)
+ 726 023c 0197      		1: sbiw r24,1
+ 727 023e 01F4      		brne 1b
+ 728 0240 00C0      		rjmp .
+ 729 0242 0000      		nop
+ 730               	.LBE67:
+ 731               	.LBE66:
+ 198:lcd_lib.c     **** 	LCDsendCommand(0b00101000);
+ 732               		.loc 1 198 0
+ 733 0244 88E2      		ldi r24,lo8(40)
+ 734 0246 0E94 0000 		call LCDsendCommand
+ 735               	.LVL73:
+ 200:lcd_lib.c     **** 	LCDsendCommand(0b00001100);
+ 736               		.loc 1 200 0
+ 737 024a 8CE0      		ldi r24,lo8(12)
+ 738 024c 0E94 0000 		call LCDsendCommand
+ 739               	.LVL74:
+ 740 0250 C0E0      		ldi r28,lo8(LcdCustomChar)
+ 741 0252 D0E0      		ldi r29,hi8(LcdCustomChar)
+ 249:lcd_lib.c     **** 	uint8_t ch=0, chn=0;
+ 742               		.loc 1 249 0
+ 743 0254 60E0      		ldi r22,0
+ 744               	.LVL75:
+ 745               	.L36:
+ 252:lcd_lib.c     **** 		LCDdefinechar((LcdCustomChar+ch),chn++);
+ 746               		.loc 1 252 0
+ 747 0256 11E0      		ldi r17,lo8(1)
+ 748 0258 160F      		add r17,r22
+ 749               	.LVL76:
+ 750 025a CE01      		movw r24,r28
+ 751 025c 0E94 0000 		call LCDdefinechar
+ 752               	.LVL77:
+ 753 0260 2896      		adiw r28,8
+ 754               	.LVL78:
+ 250:lcd_lib.c     **** 	while(ch<64)
+ 755               		.loc 1 250 0
+ 756 0262 1830      		cpi r17,lo8(8)
+ 757 0264 01F0      		breq .L34
+ 758               	.LVL79:
+ 252:lcd_lib.c     **** 		LCDdefinechar((LcdCustomChar+ch),chn++);
+ 759               		.loc 1 252 0
+ 760 0266 612F      		mov r22,r17
+ 761 0268 00C0      		rjmp .L36
+ 762               	.LVL80:
+ 763               	.L34:
+ 764               	/* epilogue start */
+ 255:lcd_lib.c     **** }	
+ 765               		.loc 1 255 0
+ 766 026a DF91      		pop r29
+ 767 026c CF91      		pop r28
+ 768               	.LVL81:
+ 769 026e 1F91      		pop r17
+ 770               	.LVL82:
+ 771 0270 0895      		ret
+ 772               		.cfi_endproc
+ 773               	.LFE8:
+ 775               	.global	LCDshiftLeft
+ 777               	LCDshiftLeft:
+ 778               	.LFB17:
+ 429:lcd_lib.c     **** 
+ 430:lcd_lib.c     **** void LCDshiftLeft(uint8_t n)	//Scrol n of characters Right
+ 431:lcd_lib.c     **** {
+ 779               		.loc 1 431 0
+ 780               		.cfi_startproc
+ 781               	.LVL83:
+ 782 0272 CF93      		push r28
+ 783               	.LCFI21:
+ 784               		.cfi_def_cfa_offset 3
+ 785               		.cfi_offset 28, -2
+ 786 0274 DF93      		push r29
+ 787               	.LCFI22:
+ 788               		.cfi_def_cfa_offset 4
+ 789               		.cfi_offset 29, -3
+ 790               	/* prologue: function */
+ 791               	/* frame size = 0 */
+ 792               	/* stack size = 2 */
+ 793               	.L__stack_usage = 2
+ 794 0276 D82F      		mov r29,r24
+ 795               	.LVL84:
+ 796               	.LBB68:
+ 432:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 797               		.loc 1 432 0
+ 798 0278 C0E0      		ldi r28,0
+ 799               	.LVL85:
+ 800               	.L38:
+ 801               		.loc 1 432 0 is_stmt 0 discriminator 1
+ 802 027a CD17      		cp r28,r29
+ 803 027c 01F0      		breq .L40
+ 433:lcd_lib.c     **** 	{
+ 434:lcd_lib.c     **** 		LCDsendCommand(0x1E);
+ 804               		.loc 1 434 0 is_stmt 1 discriminator 2
+ 805 027e 8EE1      		ldi r24,lo8(30)
+ 806 0280 0E94 0000 		call LCDsendCommand
+ 807               	.LVL86:
+ 432:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 808               		.loc 1 432 0 discriminator 2
+ 809 0284 CF5F      		subi r28,lo8(-(1))
+ 810               	.LVL87:
+ 811 0286 00C0      		rjmp .L38
+ 812               	.L40:
+ 813               	/* epilogue start */
+ 814               	.LBE68:
+ 435:lcd_lib.c     **** 	}
+ 436:lcd_lib.c     **** }
+ 815               		.loc 1 436 0
+ 816 0288 DF91      		pop r29
+ 817               	.LVL88:
+ 818 028a CF91      		pop r28
+ 819               	.LVL89:
+ 820 028c 0895      		ret
+ 821               		.cfi_endproc
+ 822               	.LFE17:
+ 824               	.global	LCDshiftRight
+ 826               	LCDshiftRight:
+ 827               	.LFB18:
+ 437:lcd_lib.c     **** void LCDshiftRight(uint8_t n)	//Scrol n of characters Left
+ 438:lcd_lib.c     **** {
+ 828               		.loc 1 438 0
+ 829               		.cfi_startproc
+ 830               	.LVL90:
+ 831 028e CF93      		push r28
+ 832               	.LCFI23:
+ 833               		.cfi_def_cfa_offset 3
+ 834               		.cfi_offset 28, -2
+ 835 0290 DF93      		push r29
+ 836               	.LCFI24:
+ 837               		.cfi_def_cfa_offset 4
+ 838               		.cfi_offset 29, -3
+ 839               	/* prologue: function */
+ 840               	/* frame size = 0 */
+ 841               	/* stack size = 2 */
+ 842               	.L__stack_usage = 2
+ 843 0292 D82F      		mov r29,r24
+ 844               	.LVL91:
+ 845               	.LBB69:
+ 439:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 846               		.loc 1 439 0
+ 847 0294 C0E0      		ldi r28,0
+ 848               	.LVL92:
+ 849               	.L42:
+ 850               		.loc 1 439 0 is_stmt 0 discriminator 1
+ 851 0296 CD17      		cp r28,r29
+ 852 0298 01F0      		breq .L44
+ 440:lcd_lib.c     **** 	{
+ 441:lcd_lib.c     **** 		LCDsendCommand(0x18);
+ 853               		.loc 1 441 0 is_stmt 1 discriminator 2
+ 854 029a 88E1      		ldi r24,lo8(24)
+ 855 029c 0E94 0000 		call LCDsendCommand
+ 856               	.LVL93:
+ 439:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 857               		.loc 1 439 0 discriminator 2
+ 858 02a0 CF5F      		subi r28,lo8(-(1))
+ 859               	.LVL94:
+ 860 02a2 00C0      		rjmp .L42
+ 861               	.L44:
+ 862               	/* epilogue start */
+ 863               	.LBE69:
+ 442:lcd_lib.c     **** 	}
+ 443:lcd_lib.c     **** }
+ 864               		.loc 1 443 0
+ 865 02a4 DF91      		pop r29
+ 866               	.LVL95:
+ 867 02a6 CF91      		pop r28
+ 868               	.LVL96:
+ 869 02a8 0895      		ret
+ 870               		.cfi_endproc
+ 871               	.LFE18:
+ 873               	.global	LCDcursorOn
+ 875               	LCDcursorOn:
+ 876               	.LFB19:
+ 444:lcd_lib.c     **** void LCDcursorOn(void) //displays LCD cursor
+ 445:lcd_lib.c     **** {
+ 877               		.loc 1 445 0
+ 878               		.cfi_startproc
+ 879               	/* prologue: function */
+ 880               	/* frame size = 0 */
+ 881               	/* stack size = 0 */
+ 882               	.L__stack_usage = 0
+ 446:lcd_lib.c     **** 	LCDsendCommand(0x0E);
+ 883               		.loc 1 446 0
+ 884 02aa 8EE0      		ldi r24,lo8(14)
+ 885 02ac 0C94 0000 		jmp LCDsendCommand
+ 886               	.LVL97:
+ 887               		.cfi_endproc
+ 888               	.LFE19:
+ 890               	.global	LCDcursorOnBlink
+ 892               	LCDcursorOnBlink:
+ 893               	.LFB20:
+ 447:lcd_lib.c     **** }
+ 448:lcd_lib.c     **** void LCDcursorOnBlink(void)	//displays LCD blinking cursor
+ 449:lcd_lib.c     **** {
+ 894               		.loc 1 449 0
+ 895               		.cfi_startproc
+ 896               	/* prologue: function */
+ 897               	/* frame size = 0 */
+ 898               	/* stack size = 0 */
+ 899               	.L__stack_usage = 0
+ 450:lcd_lib.c     **** 	LCDsendCommand(0x0F);
+ 900               		.loc 1 450 0
+ 901 02b0 8FE0      		ldi r24,lo8(15)
+ 902 02b2 0C94 0000 		jmp LCDsendCommand
+ 903               	.LVL98:
+ 904               		.cfi_endproc
+ 905               	.LFE20:
+ 907               	.global	LCDcursorOFF
+ 909               	LCDcursorOFF:
+ 910               	.LFB21:
+ 451:lcd_lib.c     **** }
+ 452:lcd_lib.c     **** void LCDcursorOFF(void)	//turns OFF cursor
+ 453:lcd_lib.c     **** {
+ 911               		.loc 1 453 0
+ 912               		.cfi_startproc
+ 913               	/* prologue: function */
+ 914               	/* frame size = 0 */
+ 915               	/* stack size = 0 */
+ 916               	.L__stack_usage = 0
+ 454:lcd_lib.c     **** 	LCDsendCommand(0x0C);
+ 917               		.loc 1 454 0
+ 918 02b6 8CE0      		ldi r24,lo8(12)
+ 919 02b8 0C94 0000 		jmp LCDsendCommand
+ 920               	.LVL99:
+ 921               		.cfi_endproc
+ 922               	.LFE21:
+ 924               	.global	LCDblank
+ 926               	LCDblank:
+ 927               	.LFB22:
+ 455:lcd_lib.c     **** }
+ 456:lcd_lib.c     **** void LCDblank(void)		//blanks LCD
+ 457:lcd_lib.c     **** {
+ 928               		.loc 1 457 0
+ 929               		.cfi_startproc
+ 930               	/* prologue: function */
+ 931               	/* frame size = 0 */
+ 932               	/* stack size = 0 */
+ 933               	.L__stack_usage = 0
+ 458:lcd_lib.c     **** 	LCDsendCommand(0x08);
+ 934               		.loc 1 458 0
+ 935 02bc 88E0      		ldi r24,lo8(8)
+ 936 02be 0C94 0000 		jmp LCDsendCommand
+ 937               	.LVL100:
+ 938               		.cfi_endproc
+ 939               	.LFE22:
+ 941               	.global	LCDvisible
+ 943               	LCDvisible:
+ 944               	.LFB23:
+ 459:lcd_lib.c     **** }
+ 460:lcd_lib.c     **** void LCDvisible(void)		//Shows LCD
+ 461:lcd_lib.c     **** {
+ 945               		.loc 1 461 0
+ 946               		.cfi_startproc
+ 947               	/* prologue: function */
+ 948               	/* frame size = 0 */
+ 949               	/* stack size = 0 */
+ 950               	.L__stack_usage = 0
+ 462:lcd_lib.c     **** 	LCDsendCommand(0x0C);
+ 951               		.loc 1 462 0
+ 952 02c2 8CE0      		ldi r24,lo8(12)
+ 953 02c4 0C94 0000 		jmp LCDsendCommand
+ 954               	.LVL101:
+ 955               		.cfi_endproc
+ 956               	.LFE23:
+ 958               	.global	LCDcursorLeft
+ 960               	LCDcursorLeft:
+ 961               	.LFB24:
+ 463:lcd_lib.c     **** }
+ 464:lcd_lib.c     **** void LCDcursorLeft(uint8_t n)	//Moves cursor by n poisitions left
+ 465:lcd_lib.c     **** {
+ 962               		.loc 1 465 0
+ 963               		.cfi_startproc
+ 964               	.LVL102:
+ 965 02c8 CF93      		push r28
+ 966               	.LCFI25:
+ 967               		.cfi_def_cfa_offset 3
+ 968               		.cfi_offset 28, -2
+ 969 02ca DF93      		push r29
+ 970               	.LCFI26:
+ 971               		.cfi_def_cfa_offset 4
+ 972               		.cfi_offset 29, -3
+ 973               	/* prologue: function */
+ 974               	/* frame size = 0 */
+ 975               	/* stack size = 2 */
+ 976               	.L__stack_usage = 2
+ 977 02cc D82F      		mov r29,r24
+ 978               	.LVL103:
+ 979               	.LBB70:
+ 466:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 980               		.loc 1 466 0
+ 981 02ce C0E0      		ldi r28,0
+ 982               	.LVL104:
+ 983               	.L51:
+ 984               		.loc 1 466 0 is_stmt 0 discriminator 1
+ 985 02d0 CD17      		cp r28,r29
+ 986 02d2 01F0      		breq .L53
+ 467:lcd_lib.c     **** 	{
+ 468:lcd_lib.c     **** 		LCDsendCommand(0x10);
+ 987               		.loc 1 468 0 is_stmt 1 discriminator 2
+ 988 02d4 80E1      		ldi r24,lo8(16)
+ 989 02d6 0E94 0000 		call LCDsendCommand
+ 990               	.LVL105:
+ 466:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 991               		.loc 1 466 0 discriminator 2
+ 992 02da CF5F      		subi r28,lo8(-(1))
+ 993               	.LVL106:
+ 994 02dc 00C0      		rjmp .L51
+ 995               	.L53:
+ 996               	/* epilogue start */
+ 997               	.LBE70:
+ 469:lcd_lib.c     **** 	}
+ 470:lcd_lib.c     **** }
+ 998               		.loc 1 470 0
+ 999 02de DF91      		pop r29
+ 1000               	.LVL107:
+ 1001 02e0 CF91      		pop r28
+ 1002               	.LVL108:
+ 1003 02e2 0895      		ret
+ 1004               		.cfi_endproc
+ 1005               	.LFE24:
+ 1007               	.global	LCDcursorRight
+ 1009               	LCDcursorRight:
+ 1010               	.LFB25:
+ 471:lcd_lib.c     **** void LCDcursorRight(uint8_t n)	//Moves cursor by n poisitions left
+ 472:lcd_lib.c     **** {
+ 1011               		.loc 1 472 0
+ 1012               		.cfi_startproc
+ 1013               	.LVL109:
+ 1014 02e4 CF93      		push r28
+ 1015               	.LCFI27:
+ 1016               		.cfi_def_cfa_offset 3
+ 1017               		.cfi_offset 28, -2
+ 1018 02e6 DF93      		push r29
+ 1019               	.LCFI28:
+ 1020               		.cfi_def_cfa_offset 4
+ 1021               		.cfi_offset 29, -3
+ 1022               	/* prologue: function */
+ 1023               	/* frame size = 0 */
+ 1024               	/* stack size = 2 */
+ 1025               	.L__stack_usage = 2
+ 1026 02e8 D82F      		mov r29,r24
+ 1027               	.LVL110:
+ 1028               	.LBB71:
+ 473:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 1029               		.loc 1 473 0
+ 1030 02ea C0E0      		ldi r28,0
+ 1031               	.LVL111:
+ 1032               	.L55:
+ 1033               		.loc 1 473 0 is_stmt 0 discriminator 1
+ 1034 02ec CD17      		cp r28,r29
+ 1035 02ee 01F0      		breq .L57
+ 474:lcd_lib.c     **** 	{
+ 475:lcd_lib.c     **** 		LCDsendCommand(0x14);
+ 1036               		.loc 1 475 0 is_stmt 1 discriminator 2
+ 1037 02f0 84E1      		ldi r24,lo8(20)
+ 1038 02f2 0E94 0000 		call LCDsendCommand
+ 1039               	.LVL112:
+ 473:lcd_lib.c     **** 	for (uint8_t i=0;i<n;i++)
+ 1040               		.loc 1 473 0 discriminator 2
+ 1041 02f6 CF5F      		subi r28,lo8(-(1))
+ 1042               	.LVL113:
+ 1043 02f8 00C0      		rjmp .L55
+ 1044               	.L57:
+ 1045               	/* epilogue start */
+ 1046               	.LBE71:
+ 476:lcd_lib.c     **** 	}
+ 477:lcd_lib.c     **** }
+ 1047               		.loc 1 477 0
+ 1048 02fa DF91      		pop r29
+ 1049               	.LVL114:
+ 1050 02fc CF91      		pop r28
+ 1051               	.LVL115:
+ 1052 02fe 0895      		ret
+ 1053               		.cfi_endproc
+ 1054               	.LFE25:
+ 1056               	.global	LCDprogressBar
+ 1058               	LCDprogressBar:
+ 1059               	.LFB26:
+ 478:lcd_lib.c     **** //adapted fro mAVRLIB
+ 479:lcd_lib.c     **** void LCDprogressBar(uint8_t progress, uint8_t maxprogress, uint8_t length)
+ 480:lcd_lib.c     **** {
+ 1060               		.loc 1 480 0
+ 1061               		.cfi_startproc
+ 1062               	.LVL116:
+ 1063 0300 CF92      		push r12
+ 1064               	.LCFI29:
+ 1065               		.cfi_def_cfa_offset 3
+ 1066               		.cfi_offset 12, -2
+ 1067 0302 DF92      		push r13
+ 1068               	.LCFI30:
+ 1069               		.cfi_def_cfa_offset 4
+ 1070               		.cfi_offset 13, -3
+ 1071 0304 EF92      		push r14
+ 1072               	.LCFI31:
+ 1073               		.cfi_def_cfa_offset 5
+ 1074               		.cfi_offset 14, -4
+ 1075 0306 FF92      		push r15
+ 1076               	.LCFI32:
+ 1077               		.cfi_def_cfa_offset 6
+ 1078               		.cfi_offset 15, -5
+ 1079 0308 0F93      		push r16
+ 1080               	.LCFI33:
+ 1081               		.cfi_def_cfa_offset 7
+ 1082               		.cfi_offset 16, -6
+ 1083 030a 1F93      		push r17
+ 1084               	.LCFI34:
+ 1085               		.cfi_def_cfa_offset 8
+ 1086               		.cfi_offset 17, -7
+ 1087 030c CF93      		push r28
+ 1088               	.LCFI35:
+ 1089               		.cfi_def_cfa_offset 9
+ 1090               		.cfi_offset 28, -8
+ 1091 030e DF93      		push r29
+ 1092               	.LCFI36:
+ 1093               		.cfi_def_cfa_offset 10
+ 1094               		.cfi_offset 29, -9
+ 1095 0310 1F92      		push __zero_reg__
+ 1096               	.LCFI37:
+ 1097               		.cfi_def_cfa_offset 11
+ 1098 0312 CDB7      		in r28,__SP_L__
+ 1099 0314 DEB7      		in r29,__SP_H__
+ 1100               	.LCFI38:
+ 1101               		.cfi_def_cfa_register 28
+ 1102               	/* prologue: function */
+ 1103               	/* frame size = 1 */
+ 1104               	/* stack size = 9 */
+ 1105               	.L__stack_usage = 9
+ 481:lcd_lib.c     **** 	uint8_t i;
+ 482:lcd_lib.c     **** 	uint16_t pixelprogress;
+ 483:lcd_lib.c     **** 	uint8_t c;
+ 484:lcd_lib.c     **** 
+ 485:lcd_lib.c     **** 	// draw a progress bar displaying (progress / maxprogress)
+ 486:lcd_lib.c     **** 	// starting from the current cursor position
+ 487:lcd_lib.c     **** 	// with a total length of "length" characters
+ 488:lcd_lib.c     **** 	// ***note, LCD chars 0-5 must be programmed as the bar characters
+ 489:lcd_lib.c     **** 	// char 0 = empty ... char 5 = full
+ 490:lcd_lib.c     **** 
+ 491:lcd_lib.c     **** 	// total pixel length of bargraph equals length*PROGRESSPIXELS_PER_CHAR;
+ 492:lcd_lib.c     **** 	// pixel length of bar itself is
+ 493:lcd_lib.c     **** 	pixelprogress = ((progress*(length*PROGRESSPIXELS_PER_CHAR))/maxprogress);
+ 1106               		.loc 1 493 0
+ 1107 0316 56E0      		ldi r21,lo8(6)
+ 1108 0318 459F      		mul r20,r21
+ 1109 031a 9001      		movw r18,r0
+ 1110 031c 1124      		clr __zero_reg__
+ 1111 031e E82F      		mov r30,r24
+ 1112 0320 E29F      		mul r30,r18
+ 1113 0322 C001      		movw r24,r0
+ 1114 0324 E39F      		mul r30,r19
+ 1115 0326 900D      		add r25,r0
+ 1116 0328 1124      		clr __zero_reg__
+ 1117               	.LVL117:
+ 1118 032a 70E0      		ldi r23,0
+ 1119 032c 0E94 0000 		call __divmodhi4
+ 1120               	.LVL118:
+ 1121 0330 8B01      		movw r16,r22
+ 1122               	.LVL119:
+ 494:lcd_lib.c     **** 	
+ 495:lcd_lib.c     **** 	// print exactly "length" characters
+ 496:lcd_lib.c     **** 	for(i=0; i<length; i++)
+ 497:lcd_lib.c     **** 	{
+ 498:lcd_lib.c     **** 		// check if this is a full block, or partial or empty
+ 499:lcd_lib.c     **** 		// (u16) cast is needed to avoid sign comparison warning
+ 500:lcd_lib.c     **** 		if( ((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+5) > pixelprogress )
+ 501:lcd_lib.c     **** 		{
+ 502:lcd_lib.c     **** 			// this is a partial or empty block
+ 503:lcd_lib.c     **** 			if( ((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)) > pixelprogress )
+ 504:lcd_lib.c     **** 			{
+ 505:lcd_lib.c     **** 				// this is an empty block
+ 506:lcd_lib.c     **** 				// use space character?
+ 507:lcd_lib.c     **** 				c = 0;
+ 508:lcd_lib.c     **** 			}
+ 509:lcd_lib.c     **** 			else
+ 510:lcd_lib.c     **** 			{
+ 511:lcd_lib.c     **** 				// this is a partial block
+ 512:lcd_lib.c     **** 				c = pixelprogress % PROGRESSPIXELS_PER_CHAR;
+ 1123               		.loc 1 512 0
+ 1124 0332 CB01      		movw r24,r22
+ 1125 0334 66E0      		ldi r22,lo8(6)
+ 1126 0336 70E0      		ldi r23,0
+ 1127 0338 0E94 0000 		call __udivmodhi4
+ 1128 033c E82E      		mov r14,r24
+ 496:lcd_lib.c     **** 	for(i=0; i<length; i++)
+ 1129               		.loc 1 496 0
+ 1130 033e C12C      		mov r12,__zero_reg__
+ 1131 0340 D12C      		mov r13,__zero_reg__
+ 1132 0342 F12C      		mov r15,__zero_reg__
+ 1133               	.LVL120:
+ 1134               	.L59:
+ 496:lcd_lib.c     **** 	for(i=0; i<length; i++)
+ 1135               		.loc 1 496 0 is_stmt 0 discriminator 1
+ 1136 0344 F416      		cp r15,r20
+ 1137 0346 01F0      		breq .L64
+ 1138 0348 9601      		movw r18,r12
+ 1139 034a 2B5F      		subi r18,-5
+ 1140 034c 3F4F      		sbci r19,-1
+ 500:lcd_lib.c     **** 		if( ((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+5) > pixelprogress )
+ 1141               		.loc 1 500 0 is_stmt 1
+ 1142 034e 0217      		cp r16,r18
+ 1143 0350 1307      		cpc r17,r19
+ 1144 0352 00F4      		brsh .L62
+ 503:lcd_lib.c     **** 			if( ((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)) > pixelprogress )
+ 1145               		.loc 1 503 0
+ 1146 0354 0C15      		cp r16,r12
+ 1147 0356 1D05      		cpc r17,r13
+ 1148 0358 00F0      		brlo .L63
+ 1149               		.loc 1 512 0
+ 1150 035a 8E2D      		mov r24,r14
+ 1151 035c 00C0      		rjmp .L60
+ 1152               	.L62:
+ 513:lcd_lib.c     **** 			}
+ 514:lcd_lib.c     **** 		}
+ 515:lcd_lib.c     **** 		else
+ 516:lcd_lib.c     **** 		{
+ 517:lcd_lib.c     **** 			// this is a full block
+ 518:lcd_lib.c     **** 			c = 5;
+ 1153               		.loc 1 518 0
+ 1154 035e 85E0      		ldi r24,lo8(5)
+ 1155 0360 00C0      		rjmp .L60
+ 1156               	.L63:
+ 507:lcd_lib.c     **** 				c = 0;
+ 1157               		.loc 1 507 0
+ 1158 0362 80E0      		ldi r24,0
+ 1159               	.L60:
+ 1160               	.LVL121:
+ 519:lcd_lib.c     **** 		}
+ 520:lcd_lib.c     **** 		
+ 521:lcd_lib.c     **** 		// write character to display
+ 522:lcd_lib.c     **** 		LCDsendChar(c);
+ 1161               		.loc 1 522 0
+ 1162 0364 4983      		std Y+1,r20
+ 1163 0366 0E94 0000 		call LCDsendChar
+ 1164               	.LVL122:
+ 496:lcd_lib.c     **** 	for(i=0; i<length; i++)
+ 1165               		.loc 1 496 0
+ 1166 036a F394      		inc r15
+ 1167               	.LVL123:
+ 1168 036c F6E0      		ldi r31,6
+ 1169 036e CF0E      		add r12,r31
+ 1170 0370 D11C      		adc r13,__zero_reg__
+ 1171 0372 4981      		ldd r20,Y+1
+ 1172 0374 00C0      		rjmp .L59
+ 1173               	.L64:
+ 1174               	/* epilogue start */
+ 523:lcd_lib.c     **** 	}
+ 524:lcd_lib.c     **** 
+ 525:lcd_lib.c     **** }
+ 1175               		.loc 1 525 0
+ 1176 0376 0F90      		pop __tmp_reg__
+ 1177 0378 DF91      		pop r29
+ 1178 037a CF91      		pop r28
+ 1179 037c 1F91      		pop r17
+ 1180 037e 0F91      		pop r16
+ 1181               	.LVL124:
+ 1182 0380 FF90      		pop r15
+ 1183               	.LVL125:
+ 1184 0382 EF90      		pop r14
+ 1185 0384 DF90      		pop r13
+ 1186 0386 CF90      		pop r12
+ 1187 0388 0895      		ret
+ 1188               		.cfi_endproc
+ 1189               	.LFE26:
+ 1191               	.global	LcdCustomChar
+ 1192               		.section	.progmem.data,"a",@progbits
+ 1195               	LcdCustomChar:
+ 1196 0000 00        		.byte	0
+ 1197 0001 1F        		.byte	31
+ 1198 0002 00        		.byte	0
+ 1199 0003 00        		.byte	0
+ 1200 0004 00        		.byte	0
+ 1201 0005 00        		.byte	0
+ 1202 0006 1F        		.byte	31
+ 1203 0007 00        		.byte	0
+ 1204 0008 00        		.byte	0
+ 1205 0009 1F        		.byte	31
+ 1206 000a 10        		.byte	16
+ 1207 000b 10        		.byte	16
+ 1208 000c 10        		.byte	16
+ 1209 000d 10        		.byte	16
+ 1210 000e 1F        		.byte	31
+ 1211 000f 00        		.byte	0
+ 1212 0010 00        		.byte	0
+ 1213 0011 1F        		.byte	31
+ 1214 0012 18        		.byte	24
+ 1215 0013 18        		.byte	24
+ 1216 0014 18        		.byte	24
+ 1217 0015 18        		.byte	24
+ 1218 0016 1F        		.byte	31
+ 1219 0017 00        		.byte	0
+ 1220 0018 00        		.byte	0
+ 1221 0019 1F        		.byte	31
+ 1222 001a 1C        		.byte	28
+ 1223 001b 1C        		.byte	28
+ 1224 001c 1C        		.byte	28
+ 1225 001d 1C        		.byte	28
+ 1226 001e 1F        		.byte	31
+ 1227 001f 00        		.byte	0
+ 1228 0020 00        		.byte	0
+ 1229 0021 1F        		.byte	31
+ 1230 0022 1E        		.byte	30
+ 1231 0023 1E        		.byte	30
+ 1232 0024 1E        		.byte	30
+ 1233 0025 1E        		.byte	30
+ 1234 0026 1F        		.byte	31
+ 1235 0027 00        		.byte	0
+ 1236 0028 00        		.byte	0
+ 1237 0029 1F        		.byte	31
+ 1238 002a 1F        		.byte	31
+ 1239 002b 1F        		.byte	31
+ 1240 002c 1F        		.byte	31
+ 1241 002d 1F        		.byte	31
+ 1242 002e 1F        		.byte	31
+ 1243 002f 00        		.byte	0
+ 1244 0030 03        		.byte	3
+ 1245 0031 07        		.byte	7
+ 1246 0032 0F        		.byte	15
+ 1247 0033 1F        		.byte	31
+ 1248 0034 0F        		.byte	15
+ 1249 0035 07        		.byte	7
+ 1250 0036 03        		.byte	3
+ 1251 0037 00        		.byte	0
+ 1252 0038 18        		.byte	24
+ 1253 0039 1C        		.byte	28
+ 1254 003a 1E        		.byte	30
+ 1255 003b 1F        		.byte	31
+ 1256 003c 1E        		.byte	30
+ 1257 003d 1C        		.byte	28
+ 1258 003e 18        		.byte	24
+ 1259 003f 00        		.byte	0
+ 1260               		.text
+ 1261               	.Letext0:
+ 1262               		.file 3 "/usr/lib/avr/include/stdint.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 lcd_lib.c
+     /tmp/ccs1I6Be.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccs1I6Be.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccs1I6Be.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccs1I6Be.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccs1I6Be.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccs1I6Be.s:11     .text:0000000000000000 LCDMix_4Bit
+     /tmp/ccs1I6Be.s:71     .text:000000000000002a LCDsendChar
+     /tmp/ccs1I6Be.s:171    .text:0000000000000082 LCDsendCommand
+     /tmp/ccs1I6Be.s:262    .text:00000000000000d2 LCDclr
+     /tmp/ccs1I6Be.s:279    .text:00000000000000d8 LCDhome
+     /tmp/ccs1I6Be.s:296    .text:00000000000000de LCDstring
+     /tmp/ccs1I6Be.s:370    .text:000000000000011c LCDGotoXY
+     /tmp/ccs1I6Be.s:412    .text:0000000000000138 CopyStringtoLCD
+     /tmp/ccs1I6Be.s:484    .text:0000000000000166 LCDdefinechar
+     /tmp/ccs1I6Be.s:580    .text:00000000000001b2 LCDinit
+     /tmp/ccs1I6Be.s:1195   .progmem.data:0000000000000000 LcdCustomChar
+     /tmp/ccs1I6Be.s:777    .text:0000000000000272 LCDshiftLeft
+     /tmp/ccs1I6Be.s:826    .text:000000000000028e LCDshiftRight
+     /tmp/ccs1I6Be.s:875    .text:00000000000002aa LCDcursorOn
+     /tmp/ccs1I6Be.s:892    .text:00000000000002b0 LCDcursorOnBlink
+     /tmp/ccs1I6Be.s:909    .text:00000000000002b6 LCDcursorOFF
+     /tmp/ccs1I6Be.s:926    .text:00000000000002bc LCDblank
+     /tmp/ccs1I6Be.s:943    .text:00000000000002c2 LCDvisible
+     /tmp/ccs1I6Be.s:960    .text:00000000000002c8 LCDcursorLeft
+     /tmp/ccs1I6Be.s:1009   .text:00000000000002e4 LCDcursorRight
+     /tmp/ccs1I6Be.s:1058   .text:0000000000000300 LCDprogressBar
+
+UNDEFINED SYMBOLS
+__divmodhi4
+__udivmodhi4
