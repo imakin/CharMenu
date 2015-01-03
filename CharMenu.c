@@ -234,6 +234,9 @@ void ReStrainScroll()
 
 void PrintScroll(uint8_t sNum, uint8_t sMax)
 {
+	LCDGotoXY(0,1);
+	LCDprogressBar(sNum, sMax,16);
+	return;
 	uint8_t mulai = 0;
 	uint8_t nScroll = 1;
 	LcdDelete(0,15,1);
