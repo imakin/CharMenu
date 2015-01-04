@@ -22,7 +22,7 @@ For an example, there are these menu:
               [FoodMenu]------------------[DrinkMenu]
           [Pizza]---[Kebab]     [CocaCola]--[Pepsi]--[BigCola]
 ```
-Inside the MainMenu there are two menus, to pick Food or Drink. Inside FoodMenu there are menus to pick wether to run pizza or kebab. On the image above, the ```Kebab``` menu is displayed, thus the cursor is to navigate between ```Kebab``` and ```Pizza```. Hitting Enter will execute the function callback which is binded to the ```kebab``` menu. Hitting prev/scroll left button will navigate the menu to ```Pizza``` menu, Hitting next/scroll right menu will get the cursor to the next menu which --as ```kebab``` is already the right most menu-- will jump the cursor to the left most menu: ```Pizza```. Back button will return the menu to its parent menu, which is to pick either ```FoodMenu``` or ```DrinkMenu```.
+Inside the MainMenu there are two menus, to pick Food or Drink. Inside FoodMenu there are menus to pick wether to run pizza or kebab. On the image above, the ```Kebab``` menu is displayed, thus the cursor is to navigate between ```Kebab``` and ```Pizza```. Hitting Enter will execute the function callback which is binded to the ```kebab``` menu. Hitting prev/scroll left button will navigate the menu to ```Pizza``` menu, Hitting next/scroll right menu will get the cursor to the next menu which --as ```kebab``` is already the right most menu-- will jump the cursor to the left most menu: ```Pizza```. Back button will return the menu to its parent menu, the menu to pick either ```FoodMenu``` or ```DrinkMenu```.
 
 Usage
 ========
