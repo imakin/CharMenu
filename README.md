@@ -4,7 +4,7 @@ CharMenu
 Easy menu drawer to use with 16x2 character LCD for AVR. 
 It uses lcd_lib.h from Scienceprog.com (GPL license)
 
-What is it?
+What is this?
 ========
 
 16x2 Char LCD is popular among embedded system, including the use in system debugging and even for user display. 
@@ -24,3 +24,6 @@ For an example, there are these menu:
 ```
 Inside the MainMenu there are two menus, to pick Food or Drink. Inside FoodMenu there are menus to pick wether to run pizza or kebab. On the image above, the ```Kebab``` menu is displayed, thus the cursor is to navigate between ```Kebab``` and ```Pizza```. Hitting Enter will execute the function callback which is binded to the ```kebab``` menu. Hitting prev/scroll left button will navigate the menu to ```Pizza``` menu, Hitting next/scroll right menu will get the cursor to the next menu which --as ```kebab``` is already the right most menu-- will jump the cursor to the left most menu: ```Pizza```. Back button will return the menu to its parent menu, which is to pick either ```FoodMenu``` or ```DrinkMenu```.
 
+Usage
+========
+See example
