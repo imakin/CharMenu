@@ -2,7 +2,7 @@ CharMenu
 ========
 
 Easy menu drawer to use with 16x2 character LCD for AVR. 
-This CharMenu uses lcd_lib.h from Scienceprog.com (GPL license). We all know that embedded system firmwares were built statically linked to any library it uses, thus the same license is used for this CharMenu.
+This CharMenu uses lcd_lib.h from Scienceprog.com (GPL license). We all know that embedded system firmwares were built statically linked to any library it uses, thus the same license is being used for this CharMenu.
 
 What is this?
 ========
