@@ -67,10 +67,21 @@ void ReStrainScroll(void);
 void PrintScroll(uint8_t sNum, uint8_t sMax);
 #define GetParentCursor(_ns)	GetCursor(GetParent(_ns))
 
+
+typedef struct st_Item tItem;
+struct st_Item{
+	uint8_t* menuText; ///should be defined in fullline LCD (16 characters)
+	st_Item* nextSibling;/// Next sibling of this Item
+	st_Item* prevSibling;/// Previous sibling of this Item
+	st_Item* parent;   /// Parent Item
+	st_Item* child;    /// The first child of the Item, the one HAS NO previous sibling
+	void (*actFunction)(void); /// Callback function pointer to execute if current item is selected, if this actFunction left undefined, current item will draw child items instead of executing callback function
+};
+
 typedef struct st_Menu tMenu;
 struct st_Menu{
 	uint16_t cursorNum;
-	uint8_t* menuText; ///should be defined in 16 characters.
+	uint8_t* menuText; ///should be defined in fullline LCD (16 characters)
 	uint8_t numOfChildren;
 	uint8_t parentIndex;///index differs from ID
 	void (*actFunction)(void);
