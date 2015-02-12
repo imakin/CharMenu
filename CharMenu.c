@@ -1,7 +1,7 @@
 /**
  * (c) 2014-2015 Izzulmakin
  * made from 23 Dec 2014 based on makin.h (github.com/imakin/sarjiya)
- * released under LGPL license, derivative works are bind to use LGPL license
+ * released under GPL license, derivative works are bind to use GPL license
  */
 #include "CharMenu.h"
 #include <stdio.h>
@@ -165,18 +165,6 @@ void CharMenuDraw()
 			{
 				gState = x;
 				gCursor = 1;
-				//~ DrawNumber(gState,0,1,3);
-				//~ uint8_t ii;
-				//~ for (ii=1;ii<TOTAL_MENU;ii++)
-				//~ {
-					//~ if ((MenuMain[ii].parentIndex==x) && (MenuMain[ii].cursorNum==1))
-					//~ {
-						//~ gCursor = 1;
-						//~ gState = ii;
-						//~ break;
-					//~ }
-				//~ }
-				//~ _delay_ms(1000);
 			}
 			else if (action == BUTTON_NEXT_DOWN)
 			{
@@ -194,9 +182,6 @@ void CharMenuDraw()
 			{
 				gCursor = MenuMain[gState].cursorNum;
 				gState = MenuMain[gState].parentIndex;
-				//~ DrawNumber(MenuMain[gState].cursorNum,3,1,2);
-				//~ gCursor = 1;
-				//~ return;
 			}
 			return;
 		}

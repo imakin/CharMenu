@@ -68,6 +68,7 @@ void PrintScroll(uint8_t sNum, uint8_t sMax);
 #define GetParentCursor(_ns)	GetCursor(GetParent(_ns))
 
 typedef struct st_Menu tMenu;
+typedef struct st_Menu2 tMenu2;
 struct st_Menu{
 	uint16_t cursorNum;
 	uint8_t* menuText; ///should be defined in 16 characters.
@@ -75,8 +76,18 @@ struct st_Menu{
 	uint8_t parentIndex;///index differs from ID
 	void (*actFunction)(void);
 };
+struct st_Menu2{
+	uint16_t state;
+	//~ uint16_t cursorNum; ///Number among siblings
+	//~ uint8_t* parent;///parent pointer
+	uint8_t* menuText; ///should be defined in 16 characters.
+	uint8_t numOfChildren;
+	uint8_t* children;///first child pointer
+	void (*actFunction)(void);
+};
 
 tMenu MenuMain[TOTAL_MENU];
+tMenu2 Menu;
 void CharMenuInit(void);
 void CharMenuRelink(void);
 void CharMenuDraw(void);

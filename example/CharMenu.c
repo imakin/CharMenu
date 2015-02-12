@@ -135,6 +135,11 @@ void CharMenuRelink()
 	}
 }
 
+void CharMenuRun()
+{
+	
+}
+
 void CharMenuDraw()
 {
 	if (MenuMain[gState].actFunction!=0)
