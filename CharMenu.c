@@ -1,7 +1,7 @@
 /**
  * (c) 2014-2015 Izzulmakin
  * made from 23 Dec 2014 based on makin.h (github.com/imakin/sarjiya)
- * released under LGPL license, derivative works are bind to use LGPL license
+ * released under GPL license, derivative works are bind to use GPL license
  */
 #include "CharMenu.h"
 #include <stdio.h>
