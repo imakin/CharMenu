@@ -1,7 +1,7 @@
 /**
  * (c) 2014-2015 Izzulmakin
  * made from 23 Dec 2014 based on makin.h (github.com/imakin/sarjiya)
- * released under GPL license, derivative works are bind to use GPL license
+ * released under LGPL license, derivative works are bind to use LGPL license
  */
 #include "CharMenu.h"
 #include <stdio.h>
@@ -11,27 +11,27 @@
 #include <util/delay.h>
 
 
-void DrawNumber(uint16_t bil, uint8_t x, uint8_t y,uint8_t _c)
+void cm_DrawNumber(uint16_t bil, uint8_t x, uint8_t y,uint8_t _c)
 {
 	uint8_t pjg;
 	char lcdchar[30];
-			LCDGotoXY(x,y);
+			cm_LcdGotoXY(x,y);
 			if (_c!=0)
 			{
 				
 				for (uint8_t i=1; i<=_c; i++)
 				{
-					LCDstring((uint8_t*)" ",1);
+					cm_LcdString((uint8_t*)" ",1);
 				}
-				LCDGotoXY(x,y);
+				cm_LcdGotoXY(x,y);
 			}
 			snprintf(lcdchar,15, "%d",bil);
 			pjg = strlen(lcdchar);
-			LCDstring((uint8_t*)lcdchar,pjg);
+			cm_LcdString((uint8_t*)lcdchar,pjg);
 	
 }
 ///
-void DrawNumberCPos(uint16_t bil, uint8_t _c)
+void cm_DrawNumberCPos(uint16_t bil, uint8_t _c)
 {
 	uint8_t pjg;
 	char lcdchar[30];
@@ -40,217 +40,209 @@ void DrawNumberCPos(uint16_t bil, uint8_t _c)
 		
 		for (uint8_t i=1; i<=_c; i++)
 		{
-			LCDstring((uint8_t*)" ",1);
+			cm_LcdString((uint8_t*)" ",1);
 		}
 	}
 	snprintf(lcdchar,15, "%d",bil);
 	pjg = strlen(lcdchar);
-	LCDstring((uint8_t*)lcdchar,pjg);
+	cm_LcdString((uint8_t*)lcdchar,pjg);
 	
 }
 
 ///Clears block with whitespace replacing
-void LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y)
+void cm_LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y)
 {
-	LCDGotoXY(xawal,_Y);
+	cm_LcdGotoXY(xawal,_Y);
 	for (uint8_t i=xawal;i<=xakhir;i++)
 	{
-		LCDstring((uint8_t*)" ",1);
+		cm_LcdString((uint8_t*)" ",1);
 	}
 }
-
-
-/**  return is it true that particular button is pressed (Enter, Back, Next, Prev)*/
-uint8_t ButtonEnter()
+void cm_LcdInit(void)
 {
-	return isclear(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN);
+	LCDinit();
 }
-uint8_t ButtonBack()
+void cm_LcdClear(void)
 {
-	return isclear(BUTTON_BACK_PIN,BUTTON_BACK_DOWN);
+	LCDclr();
 }
-uint8_t ButtonNext()
+void cm_LcdString(uint8_t* string, uint8_t len)
 {
-	return isclear(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN);
+	LCDstring(string, len);
 }
-uint8_t ButtonPrev()
+void cm_LcdGotoXY(uint8_t x, uint8_t y)
 {
-	return isclear(BUTTON_PREV_PIN,BUTTON_PREV_DOWN);
+	LCDGotoXY(x,y);
 }
 
+/**  return is it true that particular cm_Button is pressed (Enter, Back, Next, Prev)*/
+uint8_t cm_ButtonEnter()
+{
+	return isclear(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN);
+}
+uint8_t cm_ButtonBack()
+{
+	return isclear(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN);
+}
+uint8_t cm_ButtonNext()
+{
+	return isclear(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN);
+}
+uint8_t cm_ButtonPrev()
+{
+	return isclear(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN);
+}
 
 
-void ButtonWait()
+
+void cm_ButtonWait()
 {
-	/** Let the system pause and wait for any button to be pressed */
-	while (isset(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN) && isset(BUTTON_BACK_PIN,BUTTON_BACK_DOWN) && isset(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN) && isset(BUTTON_PREV_PIN,BUTTON_PREV_DOWN));
+	/** Let the system pause and wait for any cm_Button to be pressed */
+	while (isset(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN) && isset(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN) && isset(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN) && isset(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN));
 }
-uint8_t ButtonIsPressed()
+uint8_t cm_ButtonIsPressed()
 {
-	/** Check if there are (any) button pressed */
-	return (isclear(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN) || isclear(BUTTON_BACK_PIN,BUTTON_BACK_DOWN) || isclear(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN) || isclear(BUTTON_PREV_PIN,BUTTON_PREV_DOWN));
+	/** Check if there are (any) cm_Button pressed */
+	return (isclear(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN) || isclear(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN) || isclear(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN) || isclear(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN));
 }
-uint8_t ButtonIsNotPressed()
+uint8_t cm_ButtonIsNotPressed()
 {
-	/** Check if all button is currently not pressed */
-	return (isset(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN) || isset(BUTTON_BACK_PIN,BUTTON_BACK_DOWN) || isset(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN) || isset(BUTTON_PREV_PIN,BUTTON_PREV_DOWN));
+	/** Check if all cm_Button is currently not pressed */
+	return (isset(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN) || isset(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN) || isset(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN) || isset(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN));
 }
-uint8_t ButtonRead()
+uint8_t cm_ButtonRead()
 {
-	/** Wait for any button to be pressed and return which button is pressed */
+	/** Wait for any cm_Button to be pressed and return which cm_Button is pressed */
 	uint8_t output;
-	ButtonWait();
-	if (isclear(BUTTON_ENTER_PIN,BUTTON_ENTER_DOWN))
-		output = BUTTON_ENTER_DOWN;
-	else if (isclear(BUTTON_BACK_PIN,BUTTON_BACK_DOWN))
-		output = BUTTON_BACK_DOWN;
-	else if (isclear(BUTTON_NEXT_PIN,BUTTON_NEXT_DOWN))
-		output = BUTTON_NEXT_DOWN;
+	cm_ButtonWait();
+	if (isclear(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN))
+		output = CM_BUTTON_ENTER_DOWN;
+	else if (isclear(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN))
+		output = CM_BUTTON_BACK_DOWN;
+	else if (isclear(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN))
+		output = CM_BUTTON_NEXT_DOWN;
 	else 
-		output = BUTTON_PREV_DOWN;
+		output = CM_BUTTON_PREV_DOWN;
 	_delay_ms(100);
 	return (output);
 }
 
-void CharMenuInit()
+tMenu* cm_AddMenu(uint8_t* text, 
+			uint8_t cursorPos, 
+			uint8_t numOfSiblings,//-- please predefine these for best performance
+			uint8_t numOfChildren,//-- please predefine these for best performance
+			tMenu* menuParent,
+			tMenu* menuNext,
+			tMenu* menuPrevious,
+			tMenu* menuChildF,//-- optional can be set to 0, will be updated when child menu added
+			void (*actFunction)(void))
 {
-	MenuMain[0].cursorNum = 1;
-	MenuMain[0].menuText = (uint8_t*)"";//main menu text will not be used
-	MenuMain[0].numOfChildren = MAIN_MENU_NUMBER_OF_CHILDREN;
-	MenuMain[0].parentIndex = 0;
-	MenuMain[0].actFunction = 0;
-	
-	BUTTON_ENTER_PORT |= (1<<BUTTON_ENTER_DOWN);
-	BUTTON_BACK_PORT |= (1<<BUTTON_BACK_DOWN);
-	BUTTON_NEXT_PORT |= (1<<BUTTON_NEXT_DOWN);
-	BUTTON_PREV_PORT |= (1<<BUTTON_PREV_DOWN);
+	//--- add menu function, if no pointer is meant to be attached put 0 to it
+	tMenu* newMenu = malloc(sizeof(tMenu));
+	newMenu->text = text;
+	newMenu->cursorPos = cursorPos;
+	newMenu->numOfSiblings = numOfSiblings;
+	newMenu->numOfChildren = numOfChildren;
+	newMenu->menuParent = menuParent;
+	newMenu->menuNext = menuNext;
+	newMenu->menuPrevious = menuPrevious;
+	newMenu->menuChildF = menuChildF;
+	newMenu->actFunction = actFunction;
+	if (cursorPos==1 && menuParent!=0)
+	{
+		newMenu->menuParent->menuChildF = newMenu;
+	}
+	return newMenu;
 }
 
-void CharMenuRelink()
+void CharMenuInit()
 {
-	uint8_t x=0;
-	for (x=0;x<TOTAL_MENU;x++)
-	{
-		MenuMain[x].actFunction = 0;
-	}
+	CM_BUTTON_ENTER_PORT |= (1<<CM_BUTTON_ENTER_DOWN);
+	CM_BUTTON_BACK_PORT |= (1<<CM_BUTTON_BACK_DOWN);
+	CM_BUTTON_NEXT_PORT |= (1<<CM_BUTTON_NEXT_DOWN);
+	CM_BUTTON_PREV_PORT |= (1<<CM_BUTTON_PREV_DOWN);
 }
+
 
 void CharMenuDraw()
 {
-	if (MenuMain[gState].actFunction!=0)
-	{
-		MenuMain[gState].actFunction();
-		//------------- Delay and button wait is now disabled, to let user pick wether to do delay and wait for button or not
-		/**_delay_ms(500);
-		while (!ButtonBack());**/
-		gCursor = MenuMain[gState].cursorNum;
-		gState = MenuMain[gState].parentIndex;
-		return;
-	}
-	uint8_t x=0;
-	///Catch the current menu and cursor, x start from 1 (not main menu)
-	for (x=1;x<TOTAL_MENU;x++)
-	{
-		///current state is gState, find children of MenuMain[gState]
-		if ((MenuMain[x].parentIndex == gState) && ((MenuMain[x].cursorNum) == gCursor))
-		{
-			///Draw the current menu at current cursor
-			LCDGotoXY(0,0);
-			LCDstring((uint8_t*)(MenuMain[x].menuText),16);
-			PrintScroll(gCursor,MenuMain[MenuMain[x].parentIndex].numOfChildren);
+	/**
+	 * draw current menu, & listen Button press
+	 */
+	cm_LcdGotoXY(0,0);
+	cm_LcdString(cm_currentMenu->text, 16);
+	cm_PrintScroll(cm_currentMenu->cursorPos, 1+cm_currentMenu->numOfSiblings);
+	uint8_t action = cm_ButtonRead();
+	switch (action) {
+		case CM_BUTTON_ENTER_DOWN:
+			//-- typically either child menu or actFunction should be defined
+			if (cm_currentMenu->actFunction!=0)
+			{
+				cm_currentMenu->actFunction();
+				cm_currentMenu = cm_currentMenu->menuParent;
+			}
+			if (cm_currentMenu->menuChildF!=0)
+			{
+				cm_currentMenu = cm_currentMenu->menuChildF;
+			}
+			break;
+		case CM_BUTTON_NEXT_DOWN:
+			if (cm_currentMenu->menuNext!=0)
+				cm_currentMenu = cm_currentMenu->menuNext;
+			else//--rotate to left most sibling
+				while(cm_currentMenu->menuPrevious!=0)
+					cm_currentMenu = cm_currentMenu->menuPrevious;
+			break;
+		case CM_BUTTON_PREV_DOWN:
+			if (cm_currentMenu->menuPrevious!=0)
+				cm_currentMenu = cm_currentMenu->menuPrevious;
+			else//--rotate to right most sibling
+				while(cm_currentMenu->menuNext!=0)
+					cm_currentMenu = cm_currentMenu->menuNext;
 			
-			///wait signal
-			uint8_t action = ButtonRead();
-			if (action == BUTTON_ENTER_DOWN)
-			{
-				gState = x;
-				gCursor = 1;
-				//~ DrawNumber(gState,0,1,3);
-				//~ uint8_t ii;
-				//~ for (ii=1;ii<TOTAL_MENU;ii++)
-				//~ {
-					//~ if ((MenuMain[ii].parentIndex==x) && (MenuMain[ii].cursorNum==1))
-					//~ {
-						//~ gCursor = 1;
-						//~ gState = ii;
-						//~ break;
-					//~ }
-				//~ }
-				//~ _delay_ms(1000);
-			}
-			else if (action == BUTTON_NEXT_DOWN)
-			{
-				gCursor++;
-				if (gCursor>MenuMain[MenuMain[x].parentIndex].numOfChildren)
-					gCursor = 1;
-			}
-			else if (action == BUTTON_PREV_DOWN)
-			{
-				gCursor--;
-				if (gCursor<1)
-					gCursor = MenuMain[MenuMain[x].parentIndex].numOfChildren;
-			}
-			else if (action == BUTTON_BACK_DOWN)
-			{
-				gCursor = MenuMain[gState].cursorNum;
-				gState = MenuMain[gState].parentIndex;
-				//~ DrawNumber(MenuMain[gState].cursorNum,3,1,2);
-				//~ gCursor = 1;
-				//~ return;
-			}
-			return;
-		}
+			break;
+		case CM_BUTTON_BACK_DOWN:
+			if (cm_currentMenu->menuParent!=0)
+				cm_currentMenu = cm_currentMenu->menuParent;
+			break;
 	}
-}
-
-uint8_t GetCursor(uint16_t numstate)
-{
-	if (numstate>=20)
-		return (numstate%10);
-	return numstate;
-}
-uint8_t GetParent(uint16_t numstate)
-{
-	if (numstate<20)
-		return 0;///its parent is menu
-	return (numstate/10);
-}
-uint8_t GetChild(uint8_t parent, uint8_t childid)
-{
-	return (parent*10)+childid;
-}
-
-void ReStrainScroll()
-{
-	if (gCursor<1)
-	{
-		gCursor = gScrollMax;
-	}
-	else if (gCursor>gScrollMax)
-	{
-		gCursor = 1;
-	}
-}
-
-void PrintScroll(uint8_t sNum, uint8_t sMax)
-{
-	LCDGotoXY(0,1);
-	LCDprogressBar(sNum, sMax,16);
 	return;
-	uint8_t mulai = 0;
-	uint8_t nScroll = 1;
-	LcdDelete(0,15,1);
-	mulai = 8-(sMax/2);
-	LCDGotoXY(mulai,1);
-	for (nScroll = 1; nScroll<=sMax; nScroll++)
+}
+
+
+void cm_PrintScroll(uint8_t sNum, uint8_t sMax)
+{
+	cm_LcdGotoXY(0,1);
+	//~ LCDprogressBar(sNum, sMax,16);
+	//~ return;
+	uint8_t progress=sNum; uint8_t maxprogress=sMax; uint8_t length=16;
+	uint8_t i;
+	uint16_t pixelprogress;
+	uint8_t c;
+	uint8_t progresswidth = length/maxprogress;
+	pixelprogress = ((progress*(length*PROGRESSPIXELS_PER_CHAR))/maxprogress)/2;
+	
+	// print exactly "length" characters
+	for(i=0; i<length; i++)
 	{
-		if (nScroll == sNum)
+		if (
+			(
+				((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+progresswidth)>(pixelprogress-progresswidth)
+			)
+			&&
+			(
+				((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+progresswidth)<(pixelprogress+progresswidth)
+			)
+		)
 		{
-			LCDstring((uint8_t*)"#",1);
+			c = 5;
 		}
 		else
 		{
-			LCDstring((uint8_t*)"-",1);
+			c = 0;
 		}
+		// write character to display
+		LCDsendChar(c);
 	}
+	return;
 }
