@@ -29,43 +29,43 @@
 //~ #define LCD_8BIT_M 
 //******************************************************
 
-#define LCD_RS	5 	//define MCU pin connected to LCD RS
-#define LCD_RW	7 	//define MCU pin connected to LCD R/W
-#define LCD_E	4	//define MCU pin connected to LCD E
+#define LCD_RS	2 	//define MCU pin connected to LCD RS
+#define LCD_RW	1 	//define MCU pin connected to LCD R/W
+#define LCD_E	3	//define MCU pin connected to LCD E
 #define LCD_D0	0	//define MCU pin connected to LCD D0
 #define LCD_D1	7	//define MCU pin connected to LCD D1
 #define LCD_D2	1	//define MCU pin connected to LCD D2
 #define LCD_D3	2	//define MCU pin connected to LCD D3
-#define LCD_D4	3	//define MCU pin connected to LCD D4
-#define LCD_D5	2	//define MCU pin connected to LCD D5
-#define LCD_D6	1	//define MCU pin connected to LCD D6
-#define LCD_D7	0	//define MCU pin connected to LCD D7
+#define LCD_D4	4	//define MCU pin connected to LCD D4
+#define LCD_D5	5	//define MCU pin connected to LCD D5
+#define LCD_D6	6	//define MCU pin connected to LCD D6
+#define LCD_D7	7	//define MCU pin connected to LCD D7
 
 	
 
 #if defined (LCD_4BIT_M) || defined (LCD_8BIT_M)
-#define LDPRS PORTB		//RS pin assignment
-#define LDDRS DDRB
-#define LDPRW PORTB		//RW pin assignment
-#define LDDRW DDRB
-#define LDPE PORTB		//E pin assignment
-#define LDDE DDRB
-#define LDPD0 PORTB		//D0 pin assignment
-#define LDDD0 DDRB
-#define LDPD1 PORTB		//D1 pin assignment
-#define LDDD1 DDRB
-#define LDPD2 PORTB		//D2 pin assignment
-#define LDDD2 DDRB
-#define LDPD3 PORTB		//D3 pin assignment
-#define LDDD3 DDRB
-#define LDPD4 PORTB		//D4 pin assignment
-#define LDDD4 DDRB
-#define LDPD5 PORTB		//D5 pin assignment
-#define LDDD5 DDRB
-#define LDPD6 PORTB		//D6 pin assignment
-#define LDDD6 DDRB
-#define LDPD7 PORTB		//D7 pin assignment
-#define LDDD7 DDRB
+#define LDPRS PORTC		//RS pin assignment
+#define LDDRS DDRC
+#define LDPRW PORTC		//RW pin assignment
+#define LDDRW DDRC
+#define LDPE PORTC		//E pin assignment
+#define LDDE DDRC
+#define LDPD0 PORTC		//D0 pin assignment
+#define LDDD0 DDRC
+#define LDPD1 PORTC		//D1 pin assignment
+#define LDDD1 DDRC
+#define LDPD2 PORTC		//D2 pin assignment
+#define LDDD2 DDRC
+#define LDPD3 PORTC		//D3 pin assignment
+#define LDDD3 DDRC
+#define LDPD4 PORTC		//D4 pin assignment
+#define LDDD4 DDRC
+#define LDPD5 PORTC		//D5 pin assignment
+#define LDDD5 DDRC
+#define LDPD6 PORTC		//D6 pin assignment
+#define LDDD6 DDRC
+#define LDPD7 PORTC		//D7 pin assignment
+#define LDDD7 DDRC
 #endif
 
 #if defined (LCD_4BIT) || defined (LCD_8BIT) //if aligned mode
