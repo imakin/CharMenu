@@ -4,11 +4,10 @@ CharMenu
 Easy menu drawer to use with 16x2 character LCD for AVR. 
 Note:
 This CharMenu by default uses lcd_lib.h from Scienceprog.com (GPL license).
-but using other library is possible by editing these wrapper function 
+but using other library is possible by implementing these wrapper function (see demo in example)
 ```
 void cm_LcdInit(void);
 void cm_LcdClear(void);
-void cm_LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y);
 void cm_LcdString(uint8_t* string, uint8_t len);
 void cm_LcdGotoXY(uint8_t x, uint8_t y);
 ```

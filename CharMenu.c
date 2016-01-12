@@ -58,22 +58,6 @@ void cm_LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y)
 		cm_LcdString((uint8_t*)" ",1);
 	}
 }
-void cm_LcdInit(void)
-{
-	LCDinit();
-}
-void cm_LcdClear(void)
-{
-	LCDclr();
-}
-void cm_LcdString(uint8_t* string, uint8_t len)
-{
-	LCDstring(string, len);
-}
-void cm_LcdGotoXY(uint8_t x, uint8_t y)
-{
-	LCDGotoXY(x,y);
-}
 
 /**  return is it true that particular cm_Button is pressed (Enter, Back, Next, Prev)*/
 uint8_t cm_ButtonEnter()

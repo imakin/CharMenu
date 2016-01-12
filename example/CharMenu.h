@@ -42,9 +42,9 @@ void cm_DrawNumber(uint16_t bil, uint8_t x, uint8_t y,uint8_t _c);
 //-- draw number in current cursor pos
 void cm_DrawNumberCPos(uint16_t bil, uint8_t _c);
 //-- Clears block with whitespace replacing
+void cm_LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y);
 void cm_LcdInit(void);
 void cm_LcdClear(void);
-void cm_LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y);
 void cm_LcdString(uint8_t* string, uint8_t len);
 void cm_LcdGotoXY(uint8_t x, uint8_t y);
 

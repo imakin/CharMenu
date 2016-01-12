@@ -32,6 +32,24 @@ void FoodKebabBig_cb(void);
 void DrinkCola_cb(void);
 void DrinkPepsi_cb(void);
 
+//--wrapper function
+void cm_LcdInit(void)
+{
+	LCDinit();
+}
+void cm_LcdClear(void)
+{
+	LCDclr();
+}
+void cm_LcdString(uint8_t* string, uint8_t len)
+{
+	LCDstring(string, len);
+}
+void cm_LcdGotoXY(uint8_t x, uint8_t y)
+{
+	LCDGotoXY(x,y);
+}
+
 int main(void)
 {
 	cm_LcdInit();
