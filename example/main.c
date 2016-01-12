@@ -24,7 +24,7 @@
 #define STATE_DRINK_COLA		9
 #define STATE_DRINK_PEPSI		10	
 
-void init(void);
+void Init(void);
 void FoodPizzaSmall_cb(void);
 void FoodPizzaBig_cb(void);
 void FoodKebabSmall_cb(void);
@@ -34,16 +34,13 @@ void DrinkPepsi_cb(void);
 
 int main(void)
 {
-	LCDinit();
-	LCDGotoXY(0,0);
-	LCDstring("HAHA",4);
-	LCDGotoXY(0,1);
+	cm_LcdInit();
+	cm_LcdGotoXY(0,0);
+	cm_LcdString("HAHE",4);
+	cm_LcdGotoXY(0,1);
 	LCDprogressBar(7,40,16);
-	_delay_ms(2000);
+	_delay_ms(20);
 	Init();
-	CharMenuInit();
-	gCursor = 1;
-	gState = STATE_MENU;
 	
 	while(1)
 	{
@@ -54,127 +51,132 @@ int main(void)
 
 void Init(void)
 {
-	MenuMain[STATE_FOOD_MENU].cursorNum = 1;
-	MenuMain[STATE_FOOD_MENU].menuText = (uint8_t*)"Food            ";
-	MenuMain[STATE_FOOD_MENU].numOfChildren = 2;
-	MenuMain[STATE_FOOD_MENU].parentIndex = STATE_MENU;
-	
-	MenuMain[STATE_FOOD_PIZZA_MENU].cursorNum = 1;
-	MenuMain[STATE_FOOD_PIZZA_MENU].menuText = (uint8_t*)"Pizza           ";
-	MenuMain[STATE_FOOD_PIZZA_MENU].numOfChildren = 2;
-	MenuMain[STATE_FOOD_PIZZA_MENU].parentIndex = STATE_FOOD_MENU;
-	
-	MenuMain[STATE_FOOD_PIZZA_SMALL].cursorNum = 1;
-	MenuMain[STATE_FOOD_PIZZA_SMALL].menuText = (uint8_t*)"Pizza Small     ";
-	MenuMain[STATE_FOOD_PIZZA_SMALL].numOfChildren = 0;
-	MenuMain[STATE_FOOD_PIZZA_SMALL].parentIndex = STATE_FOOD_PIZZA_MENU;
-	MenuMain[STATE_FOOD_PIZZA_SMALL].actFunction = &FoodPizzaSmall_cb;
-	
-	MenuMain[STATE_FOOD_PIZZA_BIG].cursorNum = 2;
-	MenuMain[STATE_FOOD_PIZZA_BIG].menuText = (uint8_t*)"Pizza Big       ";
-	MenuMain[STATE_FOOD_PIZZA_BIG].numOfChildren = 0;
-	MenuMain[STATE_FOOD_PIZZA_BIG].parentIndex = STATE_FOOD_PIZZA_MENU;
-	MenuMain[STATE_FOOD_PIZZA_BIG].actFunction = &FoodPizzaBig_cb;
-	
-	
-	MenuMain[STATE_FOOD_KEBAB_MENU].cursorNum = 2;
-	MenuMain[STATE_FOOD_KEBAB_MENU].menuText = (uint8_t*)"Kebab           ";
-	MenuMain[STATE_FOOD_KEBAB_MENU].numOfChildren = 2;
-	MenuMain[STATE_FOOD_KEBAB_MENU].parentIndex = STATE_FOOD_MENU;
-	
-	MenuMain[STATE_FOOD_KEBAB_SMALL].cursorNum = 1;
-	MenuMain[STATE_FOOD_KEBAB_SMALL].menuText = (uint8_t*)"Kebab Small     ";
-	MenuMain[STATE_FOOD_KEBAB_SMALL].numOfChildren = 0;
-	MenuMain[STATE_FOOD_KEBAB_SMALL].parentIndex = STATE_FOOD_KEBAB_MENU;
-	MenuMain[STATE_FOOD_KEBAB_SMALL].actFunction = &FoodKebabSmall_cb;
-	
-	MenuMain[STATE_FOOD_KEBAB_BIG].cursorNum = 2;
-	MenuMain[STATE_FOOD_KEBAB_BIG].menuText = (uint8_t*)"Kebab Big       ";
-	MenuMain[STATE_FOOD_KEBAB_BIG].numOfChildren = 0;
-	MenuMain[STATE_FOOD_KEBAB_BIG].parentIndex = STATE_FOOD_KEBAB_MENU;
-	MenuMain[STATE_FOOD_KEBAB_BIG].actFunction = &FoodKebabBig_cb;
-	
-	
-	MenuMain[STATE_DRINK_MENU].cursorNum = 2;
-	MenuMain[STATE_DRINK_MENU].menuText = (uint8_t*)"Drink           ";
-	MenuMain[STATE_DRINK_MENU].numOfChildren = 2;
-	MenuMain[STATE_DRINK_MENU].parentIndex = STATE_MENU;
-	
-	MenuMain[STATE_DRINK_COLA].cursorNum = 1;
-	MenuMain[STATE_DRINK_COLA].menuText = (uint8_t*)"Cola            ";
-	MenuMain[STATE_DRINK_COLA].numOfChildren = 0;
-	MenuMain[STATE_DRINK_COLA].parentIndex = STATE_DRINK_MENU;
-	MenuMain[STATE_DRINK_COLA].actFunction = &DrinkCola_cb;
-	
-	MenuMain[STATE_DRINK_PEPSI].cursorNum = 2;
-	MenuMain[STATE_DRINK_PEPSI].menuText = (uint8_t*)"Pepsi           ";
-	MenuMain[STATE_DRINK_PEPSI].numOfChildren = 0;
-	MenuMain[STATE_DRINK_PEPSI].parentIndex = STATE_DRINK_MENU;
-	MenuMain[STATE_DRINK_PEPSI].actFunction = &DrinkPepsi_cb;
-	
-	
+	tMenu *menu_anchestor, *menu_1, *menu_2, *menu_11, *menu_12, *menu_13;
+	CharMenuInit();
+	//-- Mandatory step: set the anchestor menu
+	menu_anchestor = cm_AddMenu("MAIN MENU",
+								1,//-- cursor pos
+								0,//-- no sibling
+								2,//-- has 3 children
+								0,0,0,//-- parent,next,prev menu
+								0, //-- child menu set to 0 first
+								0);//-- no callback function
+	//-- current menu is the first shown menu: the 1st child of anchestor menu
+	menu_1 = cm_AddMenu("MENU PERTAMA    ",
+								1,
+								1,
+								3,//--has three children
+								menu_anchestor,
+								menu_2, //-- menu_2 has not pointed anywhere 
+								0,
+								menu_11,
+								0);
+	menu_2 = cm_AddMenu("MENU KEDUA      ",
+								2,
+								1,
+								0,
+								menu_anchestor,
+								0,
+								menu_1,
+								0,
+								0);
+	menu_11 = cm_AddMenu("MENU 11         ",
+								1,			//pos
+								2,			//num sibling
+								0,			//num children
+								menu_1,		//parent
+								menu_12,	//next
+								0,			//prev
+								0,			//1st child
+								0);			//cbfunction
+	menu_12 = cm_AddMenu("MENU 12         ",
+								2,			//pos
+								2,			//num sibling
+								0,			//num children
+								menu_1,		//parent
+								menu_13,	//next
+								menu_11,	//prev
+								0,			//1st child
+								0);			//cbfunction
+	menu_13 = cm_AddMenu("MENU 13         ",
+								3,			//pos
+								2,			//num sibling
+								0,			//num children
+								menu_1,		//parent
+								0,			//next
+								menu_12,	//prev
+								0,			//1st child
+								0);			//cbfunction
+	//-- do this after all menu has pointed to correct menu object
+	menu_1->menuNext 		= menu_2;
+	menu_1->menuChildF 		= menu_11;
+	menu_11->menuNext 		= menu_12;
+	menu_12->menuNext 		= menu_13;
+	menu_13->menuPrevious 	= menu_12;
+	menu_12->menuPrevious 	= menu_11;
+	//-- Mandatory step: set the current menu
+	cm_currentMenu = menu_1;
 }
-
 
 void FoodPizzaSmall_cb(void)
 {
-	LCDclr();
-	LCDGotoXY(0,0);
-	LCDstring((uint8_t*)"SMALL PIZZA",11);
-	LCDGotoXY(0,1);
-	LCDstring((uint8_t*)"HAS SELECTED",12);
+	cm_LcdClear();
+	cm_LcdGotoXY(0,0);
+	cm_LcdString((uint8_t*)"SMALL PIZZA",11);
+	cm_LcdGotoXY(0,1);
+	cm_LcdString((uint8_t*)"HAS SELECTED",12);
 	_delay_ms(500);
-	ButtonWait();
+	cm_ButtonWait();
 }
 
 void FoodPizzaBig_cb(void)
 {
-	LCDclr();
-	LCDGotoXY(0,0);
-	LCDstring((uint8_t*)"BIG PIZZA",9);
-	LCDGotoXY(0,1);
-	LCDstring((uint8_t*)"HAS SELECTED",12);
+	cm_LcdClear();
+	cm_LcdGotoXY(0,0);
+	cm_LcdString((uint8_t*)"BIG PIZZA",9);
+	cm_LcdGotoXY(0,1);
+	cm_LcdString((uint8_t*)"HAS SELECTED",12);
 	_delay_ms(500);
-	ButtonWait();
+	cm_ButtonWait();
 }
 void FoodKebabBig_cb(void)
 {
-	LCDclr();
-	LCDGotoXY(0,0);
-	LCDstring((uint8_t*)"BIG KEBAB",9);
-	LCDGotoXY(0,1);
-	LCDstring((uint8_t*)"HAS SELECTED",12);
+	cm_LcdClear();
+	cm_LcdGotoXY(0,0);
+	cm_LcdString((uint8_t*)"BIG KEBAB",9);
+	cm_LcdGotoXY(0,1);
+	cm_LcdString((uint8_t*)"HAS SELECTED",12);
 	_delay_ms(500);
-	ButtonWait();
+	cm_ButtonWait();
 }
 void FoodKebabSmall_cb(void)
 {
-	LCDclr();
-	LCDGotoXY(0,0);
-	LCDstring((uint8_t*)"SMALL KEBAB",11);
-	LCDGotoXY(0,1);
-	LCDstring((uint8_t*)"HAS SELECTED",12);
+	cm_LcdClear();
+	cm_LcdGotoXY(0,0);
+	cm_LcdString((uint8_t*)"SMALL KEBAB",11);
+	cm_LcdGotoXY(0,1);
+	cm_LcdString((uint8_t*)"HAS SELECTED",12);
 	_delay_ms(500);
-	ButtonWait();
+	cm_ButtonWait();
 }
 void DrinkCola_cb(void)
 {
-	LCDclr();
-	LCDGotoXY(0,0);
-	LCDstring((uint8_t*)"COCA-COLA",9);
-	LCDGotoXY(0,1);
-	LCDstring((uint8_t*)"HAS SELECTED",12);
+	cm_LcdClear();
+	cm_LcdGotoXY(0,0);
+	cm_LcdString((uint8_t*)"COCA-COLA",9);
+	cm_LcdGotoXY(0,1);
+	cm_LcdString((uint8_t*)"HAS SELECTED",12);
 	_delay_ms(500);
-	ButtonWait();
+	cm_ButtonWait();
 }
 void DrinkPepsi_cb(void)
 {
-	LCDclr();
-	LCDGotoXY(0,0);
-	LCDstring((uint8_t*)"PEPSI",5);
-	LCDGotoXY(0,1);
-	LCDstring((uint8_t*)"HAS SELECTED",12);
+	cm_LcdClear();
+	cm_LcdGotoXY(0,0);
+	cm_LcdString((uint8_t*)"PEPSI",5);
+	cm_LcdGotoXY(0,1);
+	cm_LcdString((uint8_t*)"HAS SELECTED",12);
 	_delay_ms(500);
-	ButtonWait();
+	cm_ButtonWait();
 }
 

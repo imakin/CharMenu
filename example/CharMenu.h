@@ -1,7 +1,6 @@
 /**
- * (c) 2014-2015 Izzulmakin
+ * (c) 2014-2016 Izzulmakin
  * made from 23 Dec 2014 based on makin.h (github.com/imakin/sarjiya)
- * released under LGPL license, derivative works are bind to use LGPL license
  * 
  * this library require lcd_lib.h v2.0 - Scienceprog.com - Copyright (C) 2007 - GPL license
  */
@@ -9,20 +8,20 @@
 #define CHAR_MENU_H
 
 #include <inttypes.h>
-///Menu uses 4 button, comprises Enter, Back, Previous, and Next, which defined here:
-#define BUTTON_ENTER_PIN	PINC
-#define BUTTON_BACK_PIN		PINC
-#define BUTTON_PREV_PIN		PINC
-#define BUTTON_NEXT_PIN		PINC
-#define BUTTON_ENTER_PORT	PORTC
-#define BUTTON_BACK_PORT	PORTC
-#define BUTTON_PREV_PORT	PORTC
-#define BUTTON_NEXT_PORT	PORTC
-///Enter the pin number for each of the button 
-#define BUTTON_ENTER_DOWN	1 ///means Enter button is in PINC- bit 1
-#define BUTTON_BACK_DOWN	2
-#define BUTTON_PREV_DOWN	0
-#define BUTTON_NEXT_DOWN	3
+///Menu uses 4 cm_Button, comprises Enter, Back, Previous, and Next, which defined here:
+#define CM_BUTTON_ENTER_PIN		PIND
+#define CM_BUTTON_BACK_PIN		PIND
+#define CM_BUTTON_PREV_PIN		PIND
+#define CM_BUTTON_NEXT_PIN		PIND
+#define CM_BUTTON_ENTER_PORT	PORTD
+#define CM_BUTTON_BACK_PORT		PORTD
+#define CM_BUTTON_PREV_PORT		PORTD
+#define CM_BUTTON_NEXT_PORT		PORTD
+///Enter the pin number for each of the cm_Button 
+#define CM_BUTTON_ENTER_DOWN	1 ///means Enter cm_Button is in PIND- bit 1
+#define CM_BUTTON_BACK_DOWN	2
+#define CM_BUTTON_PREV_DOWN	0
+#define CM_BUTTON_NEXT_DOWN	3
 
 ///MainMenu is reserved struct variable that role as prime Menu,
 ///Total number of children defined here:
@@ -38,47 +37,68 @@
 #define isset(_REG,_BIT) bit_is_set(_REG,_BIT)
 #define isclear(_REG,_BIT) bit_is_clear(_REG,_BIT)
 
-///
-void DrawNumber(uint16_t bil, uint8_t x, uint8_t y,uint8_t _c);
-///
-void DrawNumberCPos(uint16_t bil, uint8_t _c);
-///Clears block with whitespace replacing
-void LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y);
+/** wrap your LCD library here **/
+void cm_DrawNumber(uint16_t bil, uint8_t x, uint8_t y,uint8_t _c);
+//-- draw number in current cursor pos
+void cm_DrawNumberCPos(uint16_t bil, uint8_t _c);
+//-- Clears block with whitespace replacing
+void cm_LcdInit(void);
+void cm_LcdClear(void);
+void cm_LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y);
+void cm_LcdString(uint8_t* string, uint8_t len);
+void cm_LcdGotoXY(uint8_t x, uint8_t y);
 
 
-uint8_t ButtonEnter(void);
-uint8_t ButtonBack(void);
-uint8_t ButtonNext(void);
-uint8_t ButtonPrev(void);
-void 	ButtonWait(void);
-uint8_t ButtonIsPressed(void);
-uint8_t ButtonIsNotPressed(void);
-uint8_t ButtonRead(void);
+uint8_t cm_ButtonEnter(void);
+uint8_t cm_ButtonBack(void);
+uint8_t cm_ButtonNext(void);
+uint8_t cm_ButtonPrev(void);
+void 	cm_ButtonWait(void);
+uint8_t cm_ButtonIsPressed(void);
+uint8_t cm_ButtonIsNotPressed(void);
+uint8_t cm_ButtonRead(void);
 
-uint16_t gState;
-uint8_t gCursor;
-uint8_t gScrollMax;
+uint16_t cm_gState;
+uint8_t cm_gCursor;
+uint8_t cm_gScrollMax;
 
 
 uint8_t GetCursor(uint16_t numstate);
 uint8_t GetParent(uint16_t numstate);
 uint8_t GetChild(uint8_t parent, uint8_t childid);
-void ReStrainScroll(void);
-void PrintScroll(uint8_t sNum, uint8_t sMax);
+void cm_ReStrainScroll(void);
+void cm_PrintScroll(uint8_t sNum, uint8_t sMax);
 #define GetParentCursor(_ns)	GetCursor(GetParent(_ns))
 
 typedef struct st_Menu tMenu;
 struct st_Menu{
-	uint16_t cursorNum;
-	uint8_t* menuText; ///should be defined in 16 characters.
-	uint8_t numOfChildren;
-	uint8_t parentIndex;///index differs from ID
 	void (*actFunction)(void);
+	uint8_t *text; //-- should be defined in 16 characters. (padded with space if less to be 16 char)
+	uint8_t cursorPos;
+	uint8_t numOfSiblings; //-- num should be defined for best performance
+	uint8_t numOfChildren;
+	struct st_Menu *menuParent;
+	struct st_Menu *menuNext; //-- next & previous sibling
+	struct st_Menu *menuPrevious;
+	struct st_Menu *menuChildF; //--if any, attach child in pos1 only
 };
-
 tMenu MenuMain[TOTAL_MENU];
+tMenu* cm_currentMenu;
+
 void CharMenuInit(void);
 void CharMenuRelink(void);
 void CharMenuDraw(void);
+
+tMenu* cm_AddMenu(uint8_t *text, 
+			uint8_t cursorPos, 
+			uint8_t numOfSiblings,
+			uint8_t numOfChildren,
+			tMenu *menuParent,
+			tMenu *menuNext, 
+			tMenu *menuPrevious,
+			tMenu *menuChildF,
+			void (*actFunction)(void));
+
+
 #endif
 
