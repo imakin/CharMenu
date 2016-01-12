@@ -161,13 +161,8 @@ void CharMenuInit()
 	CM_BUTTON_BACK_PORT |= (1<<CM_BUTTON_BACK_DOWN);
 	CM_BUTTON_NEXT_PORT |= (1<<CM_BUTTON_NEXT_DOWN);
 	CM_BUTTON_PREV_PORT |= (1<<CM_BUTTON_PREV_DOWN);
-	cm_gState = 0x0001;
 }
 
-void CharMenuRelink()
-{
-		//MenuMain[x].actFunction = 0;
-}
 
 void CharMenuDraw()
 {
@@ -194,10 +189,17 @@ void CharMenuDraw()
 		case CM_BUTTON_NEXT_DOWN:
 			if (cm_currentMenu->menuNext!=0)
 				cm_currentMenu = cm_currentMenu->menuNext;
+			else//--rotate to left most sibling
+				while(cm_currentMenu->menuPrevious!=0)
+					cm_currentMenu = cm_currentMenu->menuPrevious;
 			break;
 		case CM_BUTTON_PREV_DOWN:
 			if (cm_currentMenu->menuPrevious!=0)
 				cm_currentMenu = cm_currentMenu->menuPrevious;
+			else//--rotate to right most sibling
+				while(cm_currentMenu->menuNext!=0)
+					cm_currentMenu = cm_currentMenu->menuNext;
+			
 			break;
 		case CM_BUTTON_BACK_DOWN:
 			if (cm_currentMenu->menuParent!=0)
@@ -207,89 +209,40 @@ void CharMenuDraw()
 	return;
 }
 
-uint8_t GetCursor(uint16_t numstate)
-{
-	if (numstate>=20)
-		return (numstate%10);
-	return numstate;
-}
-uint8_t GetParent(uint16_t numstate)
-{
-	if (numstate<20)
-		return 0;///its parent is menu
-	return (numstate/10);
-}
-uint8_t GetChild(uint8_t parent, uint8_t childid)
-{
-	return (parent*10)+childid;
-}
-
-void cm_ReStrainScroll()
-{
-	if (cm_gCursor<1)
-	{
-		cm_gCursor = cm_gScrollMax;
-	}
-	else if (cm_gCursor>cm_gScrollMax)
-	{
-		cm_gCursor = 1;
-	}
-}
 
 void cm_PrintScroll(uint8_t sNum, uint8_t sMax)
 {
 	cm_LcdGotoXY(0,1);
-	LCDprogressBar(sNum, sMax,16);
-	return;
+	//~ LCDprogressBar(sNum, sMax,16);
+	//~ return;
 	uint8_t progress=sNum; uint8_t maxprogress=sMax; uint8_t length=16;
 	uint8_t i;
 	uint16_t pixelprogress;
 	uint8_t c;
-	pixelprogress = ((progress*(length*PROGRESSPIXELS_PER_CHAR))/maxprogress);
+	uint8_t progresswidth = length/maxprogress;
+	pixelprogress = ((progress*(length*PROGRESSPIXELS_PER_CHAR))/maxprogress)/2;
 	
 	// print exactly "length" characters
 	for(i=0; i<length; i++)
 	{
-		// check if this is a full block, or partial or empty
-		// (u16) cast is needed to avoid sign comparison warning
-		if( ((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+5) > pixelprogress )
+		if (
+			(
+				((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+progresswidth)>(pixelprogress-progresswidth)
+			)
+			&&
+			(
+				((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+progresswidth)<(pixelprogress+progresswidth)
+			)
+		)
 		{
-			// this is a partial or empty block
-			if( ((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)) > pixelprogress )
-			{
-				// this is an empty block
-				// use space character?
-				c = 0;
-			}
-			else
-			{
-				// this is a partial block
-				c = pixelprogress % PROGRESSPIXELS_PER_CHAR;
-			}
+			c = 5;
 		}
 		else
 		{
-			// this is a full block
-			c = 5;
+			c = 0;
 		}
 		// write character to display
 		LCDsendChar(c);
 	}
-	
-	uint8_t mulai = 0;
-	uint8_t nScroll = 1;
-	cm_LcdDelete(0,15,1);
-	mulai = 8-(sMax/2);
-	cm_LcdGotoXY(mulai,1);
-	for (nScroll = 1; nScroll<=sMax; nScroll++)
-	{
-		if (nScroll == sNum)
-		{
-			cm_LcdString((uint8_t*)"#",1);
-		}
-		else
-		{
-			cm_LcdString((uint8_t*)"-",1);
-		}
-	}
+	return;
 }

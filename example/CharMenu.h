@@ -58,17 +58,7 @@ uint8_t cm_ButtonIsPressed(void);
 uint8_t cm_ButtonIsNotPressed(void);
 uint8_t cm_ButtonRead(void);
 
-uint16_t cm_gState;
-uint8_t cm_gCursor;
-uint8_t cm_gScrollMax;
-
-
-uint8_t GetCursor(uint16_t numstate);
-uint8_t GetParent(uint16_t numstate);
-uint8_t GetChild(uint8_t parent, uint8_t childid);
-void cm_ReStrainScroll(void);
 void cm_PrintScroll(uint8_t sNum, uint8_t sMax);
-#define GetParentCursor(_ns)	GetCursor(GetParent(_ns))
 
 typedef struct st_Menu tMenu;
 struct st_Menu{
@@ -82,11 +72,9 @@ struct st_Menu{
 	struct st_Menu *menuPrevious;
 	struct st_Menu *menuChildF; //--if any, attach child in pos1 only
 };
-tMenu MenuMain[TOTAL_MENU];
 tMenu* cm_currentMenu;
 
 void CharMenuInit(void);
-void CharMenuRelink(void);
 void CharMenuDraw(void);
 
 tMenu* cm_AddMenu(uint8_t *text, 

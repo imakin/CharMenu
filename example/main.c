@@ -35,11 +35,6 @@ void DrinkPepsi_cb(void);
 int main(void)
 {
 	cm_LcdInit();
-	cm_LcdGotoXY(0,0);
-	cm_LcdString("HAHE",4);
-	cm_LcdGotoXY(0,1);
-	LCDprogressBar(7,40,16);
-	_delay_ms(20);
 	Init();
 	
 	while(1)
