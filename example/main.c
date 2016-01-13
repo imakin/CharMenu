@@ -1,6 +1,5 @@
 /* BISMILLAH			
  * An example of using CharMenu
- * CharMenu was released under LGPL license copyright (c) 2014-2015 Izzulmakin
  * lcd_lib was released under GPL license copyright(c) scienceprog 
 */
 #include <stdlib.h>

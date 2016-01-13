@@ -1,8 +1,7 @@
 /**
  * (c) 2014-2016 Izzulmakin
- * made from 23 Dec 2014 based on makin.h (github.com/imakin/sarjiya)
+ * based on makin.h (github.com/imakin/sarjiya)
  * 
- * this library require lcd_lib.h v2.0 - Scienceprog.com - Copyright (C) 2007 - GPL license
  */
 #ifndef CHAR_MENU_H
 #define CHAR_MENU_H
