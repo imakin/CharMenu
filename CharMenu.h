@@ -7,27 +7,24 @@
 #define CHAR_MENU_H
 
 #include <inttypes.h>
-///Menu uses 4 cm_Button, comprises Enter, Back, Previous, and Next, which defined here:
-#define CM_BUTTON_ENTER_PIN		PIND
-#define CM_BUTTON_BACK_PIN		PIND
-#define CM_BUTTON_PREV_PIN		PIND
-#define CM_BUTTON_NEXT_PIN		PIND
-#define CM_BUTTON_ENTER_PORT	PORTD
-#define CM_BUTTON_BACK_PORT		PORTD
-#define CM_BUTTON_PREV_PORT		PORTD
-#define CM_BUTTON_NEXT_PORT		PORTD
-///Enter the pin number for each of the cm_Button 
-#define CM_BUTTON_ENTER_DOWN	1 ///means Enter cm_Button is in PIND- bit 1
-#define CM_BUTTON_BACK_DOWN	2
-#define CM_BUTTON_PREV_DOWN	0
-#define CM_BUTTON_NEXT_DOWN	3
+#include "settings.h"
 
-///MainMenu is reserved struct variable that role as prime Menu,
-///Total number of children defined here:
-#define MAIN_MENU_NUMBER_OF_CHILDREN	2
-///For optimum performance, total number of menus should be defined
-#define TOTAL_MENU	11
-
+#ifndef __CUSTOM_SETTINGS__
+	///Menu uses 4 cm_Button, comprises Enter, Back, Previous, and Next, which defined here:
+	#define CM_BUTTON_ENTER_PIN		PIND
+	#define CM_BUTTON_BACK_PIN		PIND
+	#define CM_BUTTON_PREV_PIN		PIND
+	#define CM_BUTTON_NEXT_PIN		PIND
+	#define CM_BUTTON_ENTER_PORT	PORTD
+	#define CM_BUTTON_BACK_PORT		PORTD
+	#define CM_BUTTON_PREV_PORT		PORTD
+	#define CM_BUTTON_NEXT_PORT		PORTD
+	///Enter the pin number for each of the cm_Button 
+	#define CM_BUTTON_ENTER_DOWN	1 ///means Enter cm_Button is in PIND- bit 1
+	#define CM_BUTTON_BACK_DOWN	2
+	#define CM_BUTTON_PREV_DOWN	0
+	#define CM_BUTTON_NEXT_DOWN	3
+#endif
 
 #define _set(_REG,_BIT) _REG |= (1<<_BIT) 			//set bit
 #define _clear(_REG,_BIT) _REG &= ~(1<<_BIT) 		//clear bit

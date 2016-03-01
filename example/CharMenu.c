@@ -206,8 +206,10 @@ void cm_PrintScroll(uint8_t sNum, uint8_t sMax)
 	uint8_t progresswidth = length/maxprogress;
 	pixelprogress = ((progress*(length*PROGRESSPIXELS_PER_CHAR))/maxprogress)/2;
 	
-	// print exactly "length" characters
-	for(i=0; i<length; i++)
+	123
+	barlength = (16*5)/sMax;
+	barstart = (sNum-1)/sMax;
+	for(i=0; i<16; i++)
 	{
 		if (
 			(
