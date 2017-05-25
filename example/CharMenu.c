@@ -3,7 +3,7 @@
  * based on makin.h (github.com/imakin/sarjiya)
  * 
  */
- #include "CharMenu.h"
+#include "CharMenu.h"
 #include <stdio.h>
 #include <string.h>
 #include <avr/io.h>
@@ -206,10 +206,8 @@ void cm_PrintScroll(uint8_t sNum, uint8_t sMax)
 	uint8_t progresswidth = length/maxprogress;
 	pixelprogress = ((progress*(length*PROGRESSPIXELS_PER_CHAR))/maxprogress)/2;
 	
-	123
-	barlength = (16*5)/sMax;
-	barstart = (sNum-1)/sMax;
-	for(i=0; i<16; i++)
+	// print exactly "length" characters
+	for(i=0; i<length; i++)
 	{
 		if (
 			(
