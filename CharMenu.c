@@ -1,232 +1,220 @@
-/**
- * (c) 2014-2016 Izzulmakin
- * based on makin.h (github.com/imakin/sarjiya)
- * 
- */
 #include "CharMenu.h"
-#include <stdio.h>
-#include <string.h>
-#include <avr/io.h>
-#include "lcd_lib.h"
-#include <util/delay.h>
 
 
-void cm_DrawNumber(uint16_t bil, uint8_t x, uint8_t y,uint8_t _c)
+/**
+ * Main process for the CharMenu framework.
+ * this process will show menus and listen to any button pressed, 
+ * and execute each menu selected
+ */
+void CharMenu__draw(CharMenu *self)
 {
-	uint8_t pjg;
-	char lcdchar[30];
-			cm_LcdGotoXY(x,y);
-			if (_c!=0)
+	if (self->current_menu==NULL)
+	{
+		self->current_menu = self->menu_root->child_head;
+	}
+	__lcd_gotoXY(0,0);
+	__lcd_string(self->current_menu->text,16);
+	self->print_scroll(
+				self,
+				self->current_menu->pos,
+				self->current_menu->parent->children
+			);
+	uint8_t action = self->button_read(self);
+	switch(action) {
+		case CHARMENU_BUTTON_ENTER_DOWN:
+			//Each Menu should have either action or having children
+			if (self->current_menu->action!=NULL)
 			{
-				
-				for (uint8_t i=1; i<=_c; i++)
-				{
-					cm_LcdString((uint8_t*)" ",1);
-				}
-				cm_LcdGotoXY(x,y);
+				self->current_menu->action();//Execution here (will be blocking)
 			}
-			snprintf(lcdchar,15, "%d",bil);
-			pjg = strlen(lcdchar);
-			cm_LcdString((uint8_t*)lcdchar,pjg);
-	
-}
-///
-void cm_DrawNumberCPos(uint16_t bil, uint8_t _c)
-{
-	uint8_t pjg;
-	char lcdchar[30];
-	if (_c!=0)
-	{
-		
-		for (uint8_t i=1; i<=_c; i++)
-		{
-			cm_LcdString((uint8_t*)" ",1);
-		}
+			else if (self->current_menu->child_head!=NULL)
+			{
+				self->current_menu = self->current_menu->child_head;
+			}
+		break;
+		case CHARMENU_BUTTON_NEXT_DOWN:
+			if (self->current_menu->next!=NULL)
+			{
+				self->current_menu = self->current_menu->next;
+			}
+			else
+			{
+				//rotate to the oldest sibling
+				while (self->current_menu->prev!=NULL)
+					self->current_menu = self->current_menu->prev;
+			}
+		break;
+		case CHARMENU_BUTTON_PREV_DOWN:
+			if (self->current_menu->prev!=NULL)
+			{
+				self->current_menu = self->current_menu->prev;
+			}
+			else
+			{
+				//rotate to the youngest sibling
+				while (self->current_menu->next!=NULL)
+					self->current_menu = self->current_menu->next;
+			}
+		break;
+		case CHARMENU_BUTTON_BACK_DOWN:
+			if (self->current_menu->parent!=NULL)
+			{
+				self->current_menu = self->current_menu->parent;
+			}
+		break;
 	}
-	snprintf(lcdchar,15, "%d",bil);
-	pjg = strlen(lcdchar);
-	cm_LcdString((uint8_t*)lcdchar,pjg);
+	return;
+}
+
+
+void CharMenu__init(CharMenu *self)
+{
 	
+	self->button_wait = &CharMenu__button_wait;
+	self->button_is_pressed = &CharMenu__button_is_pressed;
+	self->button_read = &CharMenu__button_read;
+	self->draw = &CharMenu__draw;
+	self->lcd_number = &CharMenu__lcd_number;
+	self->print_scroll = &CharMenu__print_scroll;
+	self->current_menu = NULL;
+	self->menu_root = new_Menu(self->menu_root);
+	
+	self->menu_root->text = "ENTER]     [BACK";
+	
+	CHARMENU_BUTTON_BACK_PORT |= (1<<CHARMENU_BUTTON_BACK_DOWN);
+	CHARMENU_BUTTON_ENTER_PORT |= (1<<CHARMENU_BUTTON_ENTER_DOWN);
+	CHARMENU_BUTTON_NEXT_PORT |= (1<<CHARMENU_BUTTON_NEXT_DOWN);
+	CHARMENU_BUTTON_PREV_PORT |= (1<<CHARMENU_BUTTON_PREV_DOWN);
 }
 
-///Clears block with whitespace replacing
-void cm_LcdDelete(uint8_t xawal, uint8_t xakhir, uint8_t _Y)
-{
-	cm_LcdGotoXY(xawal,_Y);
-	for (uint8_t i=xawal;i<=xakhir;i++)
-	{
-		cm_LcdString((uint8_t*)" ",1);
-	}
-}
-
-/**  return is it true that particular cm_Button is pressed (Enter, Back, Next, Prev)*/
-uint8_t cm_ButtonEnter()
-{
-	return isclear(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN);
-}
-uint8_t cm_ButtonBack()
-{
-	return isclear(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN);
-}
-uint8_t cm_ButtonNext()
-{
-	return isclear(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN);
-}
-uint8_t cm_ButtonPrev()
-{
-	return isclear(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN);
-}
-
-
-
-void cm_ButtonWait()
+/** Wait for any Button to be pressed */
+void CharMenu__button_wait(CharMenu *self)
 {
 	/** Let the system pause and wait for any cm_Button to be pressed */
-	while (isset(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN) && isset(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN) && isset(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN) && isset(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN));
+	while (
+		bit_is_set(CHARMENU_BUTTON_ENTER_PIN,CHARMENU_BUTTON_ENTER_DOWN) &&
+		bit_is_set(CHARMENU_BUTTON_BACK_PIN, CHARMENU_BUTTON_BACK_DOWN) &&
+		bit_is_set(CHARMENU_BUTTON_NEXT_PIN, CHARMENU_BUTTON_NEXT_DOWN) &&
+		bit_is_set(CHARMENU_BUTTON_PREV_PIN, CHARMENU_BUTTON_PREV_DOWN)
+	);
 }
-uint8_t cm_ButtonIsPressed()
+
+/** Wait for any Button to be pressed and return which Button is pressed 
+ * Warning: delay is removed, when using, manually put delay after function called
+ * this is important to give the time the User release the button before any next instruction executed,
+ * example:
+ *		charmenu->button_read(charmenu);
+ * 		_delay_ms(100);
+ * */
+uint8_t CharMenu__button_read(CharMenu *self)
 {
-	/** Check if there are (any) cm_Button pressed */
-	return (isclear(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN) || isclear(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN) || isclear(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN) || isclear(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN));
-}
-uint8_t cm_ButtonIsNotPressed()
-{
-	/** Check if all cm_Button is currently not pressed */
-	return (isset(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN) || isset(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN) || isset(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN) || isset(CM_BUTTON_PREV_PIN,CM_BUTTON_PREV_DOWN));
-}
-uint8_t cm_ButtonRead()
-{
-	/** Wait for any cm_Button to be pressed and return which cm_Button is pressed */
 	uint8_t output;
-	cm_ButtonWait();
-	if (isclear(CM_BUTTON_ENTER_PIN,CM_BUTTON_ENTER_DOWN))
-		output = CM_BUTTON_ENTER_DOWN;
-	else if (isclear(CM_BUTTON_BACK_PIN,CM_BUTTON_BACK_DOWN))
-		output = CM_BUTTON_BACK_DOWN;
-	else if (isclear(CM_BUTTON_NEXT_PIN,CM_BUTTON_NEXT_DOWN))
-		output = CM_BUTTON_NEXT_DOWN;
+	self->button_wait(self);
+	if (bit_is_clear(CHARMENU_BUTTON_ENTER_PIN,CHARMENU_BUTTON_ENTER_DOWN))
+		output = CHARMENU_BUTTON_ENTER_DOWN;
+	else if (bit_is_clear(CHARMENU_BUTTON_BACK_PIN,CHARMENU_BUTTON_BACK_DOWN))
+		output = CHARMENU_BUTTON_BACK_DOWN;
+	else if (bit_is_clear(CHARMENU_BUTTON_NEXT_PIN,CHARMENU_BUTTON_NEXT_DOWN))
+		output = CHARMENU_BUTTON_NEXT_DOWN;
 	else 
-		output = CM_BUTTON_PREV_DOWN;
-	_delay_ms(100);
+		output = CHARMENU_BUTTON_PREV_DOWN;
 	return (output);
 }
 
-tMenu* cm_AddMenu(uint8_t* text, 
-			uint8_t cursorPos, 
-			uint8_t numOfSiblings,//-- please predefine these for best performance
-			uint8_t numOfChildren,//-- please predefine these for best performance
-			tMenu* menuParent,
-			tMenu* menuNext,
-			tMenu* menuPrevious,
-			tMenu* menuChildF,//-- optional can be set to 0, will be updated when child menu added
-			void (*actFunction)(void))
+uint8_t CharMenu__button_is_pressed(CharMenu *self, uint8_t button)
 {
-	//--- add menu function, if no pointer is meant to be attached put 0 to it
-	tMenu* newMenu = malloc(sizeof(tMenu));
-	newMenu->text = text;
-	newMenu->cursorPos = cursorPos;
-	newMenu->numOfSiblings = numOfSiblings;
-	newMenu->numOfChildren = numOfChildren;
-	newMenu->menuParent = menuParent;
-	newMenu->menuNext = menuNext;
-	newMenu->menuPrevious = menuPrevious;
-	newMenu->menuChildF = menuChildF;
-	newMenu->actFunction = actFunction;
-	if (cursorPos==1 && menuParent!=0)
+	return 0;
+}
+
+/**
+ * print number to LCD current position,
+ * @param number: the number to be printed
+ * @param pad: the space reserved for the number.
+ * 		for example:
+ * 		 pad=4, number= 30
+ * 			print "  30"
+ * 		 pad=2, number= 30
+ * 			print "30"
+ * 		 pad=4, number= 2384
+ * 			print "2384"
+ * 		 pad=4, number= 9
+ * 			print "   9"
+ */
+void CharMenu__lcd_number(CharMenu *self, uint8_t number, uint8_t pad)
+{
+	uint8_t len;
+	char lcdchar[20];
+	uint8_t i;
+	len = snprintf(lcdchar,15, "%d", number);
+	for (i=0;i<pad-len;i++)
 	{
-		newMenu->menuParent->menuChildF = newMenu;
+		__lcd_string((uint8_t*)" ",1);
 	}
-	return newMenu;
+	__lcd_string((uint8_t *)lcdchar,len);
 }
 
-void CharMenuInit()
+
+/**
+ * print scroll bar to the bottom part of LCD
+ * @param pos: is the position of the scroll
+ * @param scale: is the length of the scroll
+ */
+void CharMenu__print_scroll(CharMenu *self, uint8_t pos, uint8_t scale)
 {
-	CM_BUTTON_ENTER_PORT |= (1<<CM_BUTTON_ENTER_DOWN);
-	CM_BUTTON_BACK_PORT |= (1<<CM_BUTTON_BACK_DOWN);
-	CM_BUTTON_NEXT_PORT |= (1<<CM_BUTTON_NEXT_DOWN);
-	CM_BUTTON_PREV_PORT |= (1<<CM_BUTTON_PREV_DOWN);
+	const uint8_t pixels_per_char = 6;
+	uint8_t max_chars = 9;
+	if (scale<max_chars)
+		max_chars = scale; //scroll is only small
+	
+	uint8_t i;
+	uint8_t c[1]; //the character 
+	__lcd_gotoXY(0,1);
+	for (i=0;i<max_chars;i++)
+	{
+		if (i==(pos*max_chars/scale))
+			c[0] = (uint8_t)124;//"|"
+		else
+			c[0] = (uint8_t)45;//"-"
+		__lcd_string(c, 1);
+	}
+	__lcd_gotoXY(9,1);
+	self->lcd_number(self, pos+1, 3);
+	__lcd_string("/",1);
+	self->lcd_number(self, scale,3);
+	return;
 }
 
 
-void CharMenuDraw()
+
+
+
+void Menu__destroy(Menu *self)
+{
+	free(self);
+}
+
+
+void Menu__add_child(Menu* self,Menu* child)
 {
 	/**
-	 * draw current menu, & listen Button press
+	 * add child to self as its child_tail
 	 */
-	cm_LcdGotoXY(0,0);
-	cm_LcdString(cm_currentMenu->text, 16);
-	cm_PrintScroll(cm_currentMenu->cursorPos, 1+cm_currentMenu->numOfSiblings);
-	uint8_t action = cm_ButtonRead();
-	switch (action) {
-		case CM_BUTTON_ENTER_DOWN:
-			//-- typically either child menu or actFunction should be defined
-			if (cm_currentMenu->actFunction!=0)
-			{
-				cm_currentMenu->actFunction();
-				cm_currentMenu = cm_currentMenu->menuParent;
-			}
-			if (cm_currentMenu->menuChildF!=0)
-			{
-				cm_currentMenu = cm_currentMenu->menuChildF;
-			}
-			break;
-		case CM_BUTTON_NEXT_DOWN:
-			if (cm_currentMenu->menuNext!=0)
-				cm_currentMenu = cm_currentMenu->menuNext;
-			else//--rotate to left most sibling
-				while(cm_currentMenu->menuPrevious!=0)
-					cm_currentMenu = cm_currentMenu->menuPrevious;
-			break;
-		case CM_BUTTON_PREV_DOWN:
-			if (cm_currentMenu->menuPrevious!=0)
-				cm_currentMenu = cm_currentMenu->menuPrevious;
-			else//--rotate to right most sibling
-				while(cm_currentMenu->menuNext!=0)
-					cm_currentMenu = cm_currentMenu->menuNext;
-			
-			break;
-		case CM_BUTTON_BACK_DOWN:
-			if (cm_currentMenu->menuParent!=0)
-				cm_currentMenu = cm_currentMenu->menuParent;
-			break;
-	}
-	return;
-}
-
-
-void cm_PrintScroll(uint8_t sNum, uint8_t sMax)
-{
-	cm_LcdGotoXY(0,1);
-	//~ LCDprogressBar(sNum, sMax,16);
-	//~ return;
-	uint8_t progress=sNum; uint8_t maxprogress=sMax; uint8_t length=16;
-	uint8_t i;
-	uint16_t pixelprogress;
-	uint8_t c;
-	uint8_t progresswidth = length/maxprogress;
-	pixelprogress = ((progress*(length*PROGRESSPIXELS_PER_CHAR))/maxprogress)/2;
-	
-	// print exactly "length" characters
-	for(i=0; i<length; i++)
+	child->parent = self;
+	child->pos = self->children;
+	if (self->child_tail==NULL)
 	{
-		if (
-			(
-				((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+progresswidth)>(pixelprogress-progresswidth)
-			)
-			&&
-			(
-				((i*(uint16_t)PROGRESSPIXELS_PER_CHAR)+progresswidth)<(pixelprogress+progresswidth)
-			)
-		)
-		{
-			c = 5;
-		}
-		else
-		{
-			c = 0;
-		}
-		// write character to display
-		LCDsendChar(c);
+		//self has no any child yet
+		self->child_head = child;
+		self->child_tail = child;
+		self->children = 1;
 	}
-	return;
+	else
+	{
+		//append child to self's children
+		self->child_tail->next = child;
+		child->prev = self->child_tail;
+		self->child_tail = child;
+		self->children += 1;
+	}
 }
+
